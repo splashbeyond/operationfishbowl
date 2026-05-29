@@ -10,7 +10,7 @@ struct TankDashboardView: View {
                     header
 
                     FocusTankView(pollutionLevel: model.pollutionLevel)
-                        .frame(height: 330)
+                        .frame(height: 400)
                         .padding(.vertical, 8)
 
                     TimeTankCard {
@@ -44,8 +44,7 @@ struct TankDashboardView: View {
                 .padding(20)
             }
             .background(Color.warmWhite)
-            .navigationTitle("TimeTank")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
         }
     }
 

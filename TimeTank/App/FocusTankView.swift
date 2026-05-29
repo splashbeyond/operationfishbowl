@@ -5,10 +5,10 @@ struct FocusTankView: View {
 
     var body: some View {
         TimelineView(.animation) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate
-            let speed = max(0.25, 1.0 - pollutionLevel * 0.72)
-            let bob    = sin(time * speed * 1.2) * 10.0
-            let sway   = cos(time * speed * 0.7) * 22.0
+            let time        = timeline.date.timeIntervalSinceReferenceDate
+            let speed       = max(0.25, 1.0 - pollutionLevel * 0.72)
+            let bob         = sin(time * speed * 1.2) * 10.0
+            let sway        = cos(time * speed * 0.7) * 22.0
             let facingRight = sway >= 0
 
             GeometryReader { geo in
@@ -16,20 +16,46 @@ struct FocusTankView: View {
                 let finnSize = size * 0.36
 
                 ZStack {
-                    // Empty glass bowl — tinted by pollution level
+                    // 1. Glass bowl (back)
                     Image("FinnBowlOnly")
                         .resizable()
                         .scaledToFit()
                         .frame(width: size, height: size)
-                        .colorMultiply(bowlTint)
 
-                    // Finn — swims left/right, bobs up/down, slows as tank pollutes
+                    // 2. Water fill + bubbles clipped to bowl interior
+                    Canvas { ctx, canvasSize in
+                        let interior = CGRect(
+                            x: canvasSize.width  * 0.21,
+                            y: canvasSize.height * 0.30,
+                            width:  canvasSize.width  * 0.58,
+                            height: canvasSize.height * 0.47
+                        )
+                        ctx.clip(to: Path(ellipseIn: interior))
+
+                        // Water fill — gradient fade at surface so it blends into glass
+                        let water = waterPath(in: interior, time: time)
+                        let surfaceY = interior.maxY - interior.height * (0.84 + pollutionLevel * 0.12)
+                        ctx.fill(water, with: .linearGradient(
+                            Gradient(stops: [
+                                .init(color: waterColor.opacity(0.0),  location: 0.0),
+                                .init(color: waterColor.opacity(0.38), location: 0.18),
+                                .init(color: waterColor.opacity(0.52), location: 1.0)
+                            ]),
+                            startPoint: CGPoint(x: interior.midX, y: surfaceY),
+                            endPoint:   CGPoint(x: interior.midX, y: interior.maxY)
+                        ))
+
+                        drawBubbles(in: &ctx, rect: interior, time: time)
+                    }
+                    .frame(width: size, height: size)
+
+                    // 3. Finn on top — swims left/right, bobs, faces direction of travel
                     Image("FinnMascot")
                         .resizable()
                         .scaledToFit()
                         .frame(width: finnSize)
                         .scaleEffect(x: facingRight ? 1 : -1, y: 1)
-                        .offset(x: sway, y: size * 0.04 + bob)
+                        .offset(x: sway, y: size * 0.05 + bob)
                         .opacity(1.0 - pollutionLevel * 0.28)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
@@ -39,17 +65,49 @@ struct FocusTankView: View {
         .padding(10)
     }
 
-    // Multiplied over the bowl image — white = no change, warm browns = polluted
-    private var bowlTint: Color {
+    // Water color shifts from teal → amber → muddy as pollution rises
+    private var waterColor: Color {
         switch pollutionLevel {
         case 0..<0.25:
-            return Color(red: 1.0, green: 1.0, blue: 1.0)   // crystal clear
+            return Color(red: 0.0,  green: 0.75, blue: 0.65) // Tank Teal
         case 0.25..<0.5:
-            return Color(red: 1.0, green: 0.97, blue: 0.82)  // faint yellow murk
+            return Color(red: 0.3,  green: 0.78, blue: 0.68) // muted teal
         case 0.5..<0.75:
-            return Color(red: 1.0, green: 0.88, blue: 0.62)  // amber
+            return Color(red: 1.0,  green: 0.67, blue: 0.25) // amber
         default:
-            return Color(red: 0.88, green: 0.72, blue: 0.48) // muddy brown
+            return Color(red: 0.71, green: 0.40, blue: 0.11) // muddy brown
+        }
+    }
+
+    private func waterPath(in rect: CGRect, time: TimeInterval) -> Path {
+        let fill      = 0.84 + pollutionLevel * 0.12
+        let baseline  = rect.maxY - rect.height * fill
+        let amplitude = max(2.0, 7.0 - pollutionLevel * 4.0)
+        let freq      = Double.pi * 2.0 / Double(rect.width)
+        let shift     = time * (1.3 - pollutionLevel * 0.75)
+
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: baseline))
+        stride(from: rect.minX, through: rect.maxX, by: 2).forEach { x in
+            let y = baseline + sin((Double(x) - Double(rect.minX)) * freq * 2.4 + shift) * amplitude
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+
+    private func drawBubbles(in ctx: inout GraphicsContext, rect: CGRect, time: TimeInterval) {
+        for i in 0..<6 {
+            let spread  = Double(i % 3) * 0.28 + 0.15
+            let phase   = Double(i) * 0.43
+            let cycle   = (time * 0.055 + phase).truncatingRemainder(dividingBy: 1.0)
+            let x       = rect.minX + rect.width  * spread
+            let y       = rect.maxY - rect.height * CGFloat(cycle) * 0.9
+            let r       = CGFloat(2.0 + Double(i % 3) * 1.2)
+            let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+            ctx.stroke(bubble, with: .color(.white.opacity(0.60)), lineWidth: 1.2)
         }
     }
 }
