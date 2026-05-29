@@ -30,4 +30,5 @@ enum TimeTankDefaultsKey {
     static let isBudgetExceededToday = "isBudgetExceededToday"
     static let hasSeenOnboarding = "hasSeenOnboarding"
     static let diagnostics = "diagnostics"
+    static let simulatorDemoSelectionEnabled = "simulatorDemoSelectionEnabled"
 }

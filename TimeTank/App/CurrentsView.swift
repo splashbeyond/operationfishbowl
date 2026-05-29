@@ -9,6 +9,14 @@ struct CurrentsView: View {
                 VStack(spacing: 18) {
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 10) {
+                            Image("FinnMascot")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxHeight: 170)
+                                .frame(maxWidth: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .accessibilityLabel("Finn the TimeTank mascot")
+
                             Text("CURRENTS")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color.textMuted)

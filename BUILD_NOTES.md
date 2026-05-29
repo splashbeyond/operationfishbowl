@@ -37,6 +37,8 @@ See `APPLE_REVIEW_AND_ENTITLEMENT.md` for entitlement request copy, App Review n
 
 Screen Time APIs are not meaningfully testable in Simulator. Use a physical iPhone signed with the approved entitlement.
 
+For Simulator, TimeTank includes an explicit demo mode. The onboarding authorization button succeeds locally, and the Budget tab can enable a demo distraction selection so the app flow can be exercised without Apple Screen Time tokens. This does not prove real Screen Time authorization, Family Activity tokens, Device Activity callbacks, or Managed Settings shields; those still require the signed physical-device checklist below.
+
 Recommended first device test:
 
 1. Install TimeTank on device from Xcode.

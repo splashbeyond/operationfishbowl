@@ -11,6 +11,24 @@ struct BudgetSetupView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
+                    if model.isRunningInSimulator {
+                        TimeTankCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Simulator Demo Mode", systemImage: "iphone.gen3")
+                                    .font(.timeTankHeading(18))
+                                    .foregroundStyle(Color.textDark)
+
+                                Text("Apple's real Screen Time permissions, picker tokens, and shields require a signed physical iPhone. Use a demo selection here to exercise the MVP flow in Simulator.")
+                                    .font(.timeTankBody(14))
+                                    .foregroundStyle(Color.textMuted)
+
+                                PrimaryButton(title: "Use Demo Selection", systemImage: "sparkles") {
+                                    model.enableSimulatorDemoSelection()
+                                }
+                            }
+                        }
+                    }
+
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 14) {
                             Text("PICK APPS")
@@ -29,6 +47,8 @@ struct BudgetSetupView: View {
                                 pickerSelection = model.selection
                                 isPickerPresented = true
                             }
+                            .opacity(model.isRunningInSimulator ? 0.55 : 1)
+                            .disabled(model.isRunningInSimulator)
                         }
                     }
 
@@ -73,6 +93,12 @@ struct BudgetSetupView: View {
                                     .foregroundStyle(Color.muddyBrown)
                             }
 
+                            if !model.isAuthorized {
+                                PrimaryButton(title: "Allow Screen Time", systemImage: "person.badge.shield.checkmark") {
+                                    Task { await model.requestAuthorization() }
+                                }
+                            }
+
                             PrimaryButton(title: model.isMonitoringEnabled ? "Restart Monitoring" : "Start Monitoring", systemImage: "water.waves") {
                                 model.startMonitoring()
                             }
@@ -105,6 +131,9 @@ struct BudgetSetupView: View {
         let count = model.selectedItemCount
         if count == 0 {
             return "No distractions selected yet."
+        }
+        if model.isSimulatorDemoSelectionEnabled && !model.hasSelection {
+            return "Demo distraction saved for Simulator."
         }
         return "\(count) selection\(count == 1 ? "" : "s") saved for Finn's tank."
     }

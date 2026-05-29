@@ -15,6 +15,7 @@ final class TimeTankModel {
     var isBudgetExceededToday: Bool
     var bypassExpiresAt: Date?
     var diagnostics: [TimeTankDiagnosticEvent]
+    var isSimulatorDemoSelectionEnabled: Bool
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -30,8 +31,13 @@ final class TimeTankModel {
         isBudgetExceededToday = store.isBudgetExceededToday
         bypassExpiresAt = store.bypassExpiresAt
         diagnostics = store.diagnostics
+        isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         scheduleError = store.lastScheduleError
+        #if targetEnvironment(simulator)
+        isAuthorized = true
+        #else
         isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
+        #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         enforceExpiredBypassIfNeeded()
     }
@@ -42,15 +48,35 @@ final class TimeTankModel {
         !selection.webDomainTokens.isEmpty
     }
 
+    var hasEffectiveSelection: Bool {
+        hasSelection || isSimulatorDemoSelectionEnabled
+    }
+
     var selectedItemCount: Int {
-        selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+        let selectedTokens = selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+        return selectedTokens > 0 ? selectedTokens : (isSimulatorDemoSelectionEnabled ? 1 : 0)
     }
 
     var remainingMinutesEstimate: Int {
         max(0, Int(Double(dailyBudgetMinutes) * (1 - pollutionLevel)))
     }
 
+    var isRunningInSimulator: Bool {
+        #if targetEnvironment(simulator)
+        true
+        #else
+        false
+        #endif
+    }
+
     func requestAuthorization() async {
+        #if targetEnvironment(simulator)
+        isAuthorized = true
+        authorizationError = nil
+        statusMessage = "Simulator demo mode is ready. Real Screen Time authorization needs an iPhone."
+        store.recordDiagnostic("Simulator demo authorization enabled.", source: "App")
+        refresh()
+        #else
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
@@ -64,6 +90,7 @@ final class TimeTankModel {
             store.recordDiagnostic("Authorization request failed: \(error.localizedDescription)", source: "App")
         }
         refresh()
+        #endif
     }
 
     func completeOnboarding() {
@@ -74,8 +101,17 @@ final class TimeTankModel {
     func saveSelection(_ newSelection: FamilyActivitySelection) {
         selection = newSelection
         store.selection = newSelection
+        store.simulatorDemoSelectionEnabled = false
         statusMessage = hasSelection ? "Selection saved. Finn has a reason to care." : "Pick something. Finn needs a reason to care."
         store.recordDiagnostic("Selection saved with \(selectedItemCount) item(s).", source: "App")
+        refresh()
+    }
+
+    func enableSimulatorDemoSelection() {
+        store.simulatorDemoSelectionEnabled = true
+        isSimulatorDemoSelectionEnabled = true
+        statusMessage = "Simulator demo selection is ready."
+        store.recordDiagnostic("Simulator demo selection enabled.", source: "App")
         refresh()
     }
 
@@ -88,7 +124,15 @@ final class TimeTankModel {
     }
 
     func startMonitoring() {
-        guard hasSelection else {
+        guard isAuthorized else {
+            scheduleError = "Approve Screen Time access before starting monitoring."
+            statusMessage = "Screen Time access is needed before Finn can help."
+            store.recordDiagnostic("Monitoring start blocked: missing authorization.", source: "App")
+            refresh()
+            return
+        }
+
+        guard hasEffectiveSelection else {
             scheduleError = "Select at least one app, category, or website first."
             statusMessage = "Pick something. Finn needs a reason to care."
             store.recordDiagnostic("Monitoring start blocked: no selection.", source: "App")
@@ -96,6 +140,15 @@ final class TimeTankModel {
             return
         }
 
+        #if targetEnvironment(simulator)
+        store.isMonitoringEnabled = true
+        store.lastScheduleError = nil
+        isMonitoringEnabled = true
+        scheduleError = nil
+        statusMessage = "Simulator demo monitoring is on."
+        store.recordDiagnostic("Simulator demo monitoring started.", source: "App")
+        refresh()
+        #else
         do {
             try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes)
             store.isMonitoringEnabled = true
@@ -113,6 +166,7 @@ final class TimeTankModel {
             store.recordDiagnostic("Daily monitoring failed: \(error.localizedDescription)", source: "App")
         }
         refresh()
+        #endif
     }
 
     func stopMonitoring() {
@@ -129,7 +183,11 @@ final class TimeTankModel {
 
     func refresh() {
         enforceExpiredBypassIfNeeded()
+        #if targetEnvironment(simulator)
+        isAuthorized = true
+        #else
         isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
+        #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         pollutionLevel = store.pollutionLevel
         currentsBalance = store.currentsBalance
@@ -139,6 +197,7 @@ final class TimeTankModel {
         isBudgetExceededToday = store.isBudgetExceededToday
         bypassExpiresAt = store.bypassExpiresAt
         diagnostics = store.diagnostics
+        isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         scheduleError = store.lastScheduleError
     }
 

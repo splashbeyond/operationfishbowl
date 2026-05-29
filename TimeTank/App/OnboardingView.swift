@@ -9,8 +9,12 @@ struct OnboardingView: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    FocusTankView(pollutionLevel: 0)
+                    Image("FinnBowl")
+                        .resizable()
+                        .scaledToFit()
                         .frame(height: 246)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .accessibilityLabel("Finn swimming in his bowl")
                         .padding(.top, 38)
 
                     VStack(spacing: 10) {
@@ -65,6 +69,14 @@ struct OnboardingView: View {
                         Text(error)
                             .font(.timeTankBody(13))
                             .foregroundStyle(Color.muddyBrown)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 28)
+                    }
+
+                    if model.isRunningInSimulator {
+                        Text("Simulator uses demo Screen Time mode. Real permissions and shields must be tested on a signed iPhone.")
+                            .font(.timeTankBody(13))
+                            .foregroundStyle(Color.textMuted)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 28)
                     }

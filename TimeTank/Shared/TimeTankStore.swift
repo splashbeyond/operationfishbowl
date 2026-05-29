@@ -72,6 +72,11 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.hasSeenOnboarding) }
     }
 
+    var simulatorDemoSelectionEnabled: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.simulatorDemoSelectionEnabled) }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.simulatorDemoSelectionEnabled) }
+    }
+
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
