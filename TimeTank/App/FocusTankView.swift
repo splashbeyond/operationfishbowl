@@ -25,12 +25,31 @@ struct FocusTankView: View {
                     // 2. Water fill + bubbles clipped to bowl interior
                     Canvas { ctx, canvasSize in
                         let interior = CGRect(
-                            x: canvasSize.width  * 0.21,
+                            x: canvasSize.width  * 0.225,
                             y: canvasSize.height * 0.30,
-                            width:  canvasSize.width  * 0.58,
+                            width:  canvasSize.width  * 0.562,
                             height: canvasSize.height * 0.47
                         )
-                        ctx.clip(to: Path(ellipseIn: interior))
+                        // Bowl-shaped clip: straight sides at the top so the water
+                        // surface spans full width, large semicircle at the bottom
+                        // to match the bowl's rounded base.
+                        let rTop = interior.width * 0.06
+                        let rBot = interior.width * 0.53
+                        var clipPath = Path()
+                        clipPath.move(to: CGPoint(x: interior.minX + rTop, y: interior.minY))
+                        clipPath.addLine(to: CGPoint(x: interior.maxX - rTop, y: interior.minY))
+                        clipPath.addQuadCurve(to: CGPoint(x: interior.maxX, y: interior.minY + rTop),
+                                              control: CGPoint(x: interior.maxX, y: interior.minY))
+                        clipPath.addLine(to: CGPoint(x: interior.maxX, y: interior.maxY - rBot))
+                        clipPath.addQuadCurve(to: CGPoint(x: interior.midX, y: interior.maxY),
+                                              control: CGPoint(x: interior.maxX, y: interior.maxY))
+                        clipPath.addQuadCurve(to: CGPoint(x: interior.minX, y: interior.maxY - rBot),
+                                              control: CGPoint(x: interior.minX, y: interior.maxY))
+                        clipPath.addLine(to: CGPoint(x: interior.minX, y: interior.minY + rTop))
+                        clipPath.addQuadCurve(to: CGPoint(x: interior.minX + rTop, y: interior.minY),
+                                              control: CGPoint(x: interior.minX, y: interior.minY))
+                        clipPath.closeSubpath()
+                        ctx.clip(to: clipPath)
 
                         // Water fill — gradient fade at surface so it blends into glass
                         let water = waterPath(in: interior, time: time)
