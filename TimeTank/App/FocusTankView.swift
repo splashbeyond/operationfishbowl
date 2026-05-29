@@ -126,7 +126,8 @@ struct FocusTankView: View {
             let y       = rect.maxY - rect.height * CGFloat(cycle) * 0.9
             let r       = CGFloat(2.0 + Double(i % 3) * 1.2)
             let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
-            ctx.stroke(bubble, with: .color(.white.opacity(0.60)), lineWidth: 1.2)
+            let opacity = min(cycle * 7.0, 1.0) * 0.60
+            ctx.stroke(bubble, with: .color(.white.opacity(opacity)), lineWidth: 1.2)
         }
     }
 }
