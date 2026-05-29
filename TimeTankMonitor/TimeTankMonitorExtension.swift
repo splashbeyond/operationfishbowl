@@ -1,0 +1,48 @@
+import DeviceActivity
+import Foundation
+
+final class TimeTankMonitorExtension: DeviceActivityMonitor {
+    private let store = TimeTankStore()
+
+    override func intervalDidStart(for activity: DeviceActivityName) {
+        super.intervalDidStart(for: activity)
+
+        guard activity == TimeTankConstants.dailyActivityName else { return }
+
+        store.awardCleanDayIfNeeded()
+        ScreenTimeShielding.clearShield()
+        store.recordDiagnostic("Daily interval started; progress evaluated.", source: "Monitor")
+    }
+
+    override func intervalDidEnd(for activity: DeviceActivityName) {
+        super.intervalDidEnd(for: activity)
+
+        if activity == TimeTankConstants.bypassActivityName {
+            store.clearBypassWindow()
+            store.recordDiagnostic("Bypass interval ended.", source: "Monitor")
+
+            if store.shouldReapplyShield() {
+                ScreenTimeShielding.applyShield(for: store.selection)
+            }
+        }
+    }
+
+    override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
+        super.eventDidReachThreshold(event, activity: activity)
+
+        if activity == TimeTankConstants.dailyActivityName && event == TimeTankConstants.budgetEventName {
+            store.markBudgetExceeded()
+            store.recordDiagnostic("Daily budget threshold reached.", source: "Monitor")
+            ScreenTimeShielding.applyShield(for: store.selection)
+        }
+
+        if activity == TimeTankConstants.bypassActivityName && event == TimeTankConstants.bypassEventName {
+            store.clearBypassWindow()
+            store.recordDiagnostic("Bypass event threshold reached.", source: "Monitor")
+
+            if store.shouldReapplyShield() {
+                ScreenTimeShielding.applyShield(for: store.selection)
+            }
+        }
+    }
+}

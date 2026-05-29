@@ -1,0 +1,25 @@
+# Xcode
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# Archives and symbols
+*.xcarchive
+*.dSYM
+
+# Local environment
+.env
+.env.*
