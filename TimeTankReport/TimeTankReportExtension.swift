@@ -79,23 +79,13 @@ struct TimeTankAllAppsReport: DeviceActivityReportScene {
 
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> TimeTankUsageReportConfiguration {
         var configuration = TimeTankUsageReportConfiguration()
-        var allDailyTotals: [TimeInterval] = []
 
         for await activityData in data {
-            var dayTotal: TimeInterval = 0
+            configuration.lastUpdated = activityData.lastUpdatedDate
             for await segment in activityData.activitySegments {
-                dayTotal += segment.totalActivityDuration
-            }
-            allDailyTotals.append(dayTotal)
-
-            if Calendar.current.isDateInToday(activityData.lastUpdatedDate) {
-                configuration.totalDuration = dayTotal
-                configuration.lastUpdated = activityData.lastUpdatedDate
+                configuration.totalDuration += segment.totalActivityDuration
             }
         }
-
-        // Divide by 7 so days with no recorded usage still pull the average down
-        configuration.sevenDayAverage = allDailyTotals.reduce(0, +) / 7.0
 
         return configuration
     }
@@ -229,16 +219,9 @@ struct TimeTankScreenTimeReportView: View {
                 }
             }
 
-            if configuration.sevenDayAverage > 0 {
-                HStack(spacing: 4) {
-                    Text("7-day avg")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(textMuted)
-                    Text("\(durationString(configuration.sevenDayAverage)) / day")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(textDark)
-                }
-            }
+            Text("Total device usage today")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(textMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(4)

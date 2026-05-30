@@ -85,13 +85,9 @@ struct StatsView: View {
     }
 
     private var allAppsReportFilter: DeviceActivityFilter {
-        let calendar = Calendar.current
-        let today = Date()
-        let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) ?? today
-        let start = calendar.startOfDay(for: sevenDaysAgo)
-        let end = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: today) ?? today
+        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval(start: Date(), duration: 24 * 60 * 60)
         return DeviceActivityFilter(
-            segment: .daily(during: DateInterval(start: start, end: end)),
+            segment: .daily(during: interval),
             users: .all,
             devices: .init([.iPhone, .iPad])
         )
