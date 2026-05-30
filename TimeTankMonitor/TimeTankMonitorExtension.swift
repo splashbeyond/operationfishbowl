@@ -50,8 +50,10 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
         }
 
         if activity == TimeTankConstants.bypassActivityName && event == TimeTankConstants.bypassEventName {
+            // User actually used the app during the bypass window — now count it
+            store.incrementBypassCount()
             store.clearBypassWindow()
-            store.recordDiagnostic("Bypass event threshold reached.", source: "Monitor")
+            store.recordDiagnostic("Bypass used: app opened during window; bypass counted.", source: "Monitor")
 
             if store.shouldReapplyShield() {
                 ScreenTimeShielding.applyShield(for: store.selection)
