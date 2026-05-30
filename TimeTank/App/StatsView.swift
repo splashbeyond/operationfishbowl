@@ -1,3 +1,4 @@
+import DeviceActivity
 import SwiftUI
 
 struct StatsView: View {
@@ -27,13 +28,23 @@ struct StatsView: View {
                     }
 
                     TimeTankCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("MVP NOTE")
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("SCREEN TIME REPORT")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color.textMuted)
-                            Text("Detailed history starts after the core Screen Time loop is verified on device.")
-                                .font(.timeTankBody())
-                                .foregroundStyle(Color.textDark)
+
+                            if model.isRunningInSimulator {
+                                Text("Real app usage, pickups, notifications, and first pickup only render on a signed iPhone with Screen Time authorization.")
+                                    .font(.timeTankBody())
+                                    .foregroundStyle(Color.textDark)
+                            } else if model.hasSelection {
+                                DeviceActivityReport(TimeTankConstants.reportContext, filter: reportFilter)
+                                    .frame(minHeight: 220)
+                            } else {
+                                Text("Pick distractions first. The report uses those selected app, category, and web tokens.")
+                                    .font(.timeTankBody())
+                                    .foregroundStyle(Color.textDark)
+                            }
                         }
                     }
                 }
@@ -42,5 +53,18 @@ struct StatsView: View {
             .background(Color.warmWhite)
             .navigationTitle("Stats")
         }
+    }
+
+    private var reportFilter: DeviceActivityFilter {
+        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval(start: Date(), duration: 24 * 60 * 60)
+
+        return DeviceActivityFilter(
+            segment: .daily(during: interval),
+            users: .all,
+            devices: .init([.iPhone, .iPad]),
+            applications: model.selection.applicationTokens,
+            categories: model.selection.categoryTokens,
+            webDomains: model.selection.webDomainTokens
+        )
     }
 }

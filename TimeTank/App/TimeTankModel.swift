@@ -16,6 +16,10 @@ final class TimeTankModel {
     var bypassExpiresAt: Date?
     var diagnostics: [TimeTankDiagnosticEvent]
     var isSimulatorDemoSelectionEnabled: Bool
+    var activeActivitySummary: String
+    var lastMonitoringStartDate: Date?
+    var lastShieldApplyDate: Date?
+    var lastShieldClearDate: Date?
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -32,6 +36,10 @@ final class TimeTankModel {
         bypassExpiresAt = store.bypassExpiresAt
         diagnostics = store.diagnostics
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
+        activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
+        lastMonitoringStartDate = store.lastMonitoringStartDate
+        lastShieldApplyDate = store.lastShieldApplyDate
+        lastShieldClearDate = store.lastShieldClearDate
         scheduleError = store.lastScheduleError
         #if targetEnvironment(simulator)
         isAuthorized = true
@@ -151,8 +159,7 @@ final class TimeTankModel {
         #else
         do {
             try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes)
-            store.isMonitoringEnabled = true
-            store.lastScheduleError = nil
+            store.markMonitoringStarted()
             isMonitoringEnabled = true
             scheduleError = nil
             statusMessage = "TimeTank is watching the water."
@@ -181,6 +188,72 @@ final class TimeTankModel {
         refresh()
     }
 
+    func startOneMinuteDeviceTest() {
+        guard isAuthorized else {
+            scheduleError = "Approve Screen Time access before starting the device test."
+            store.recordDiagnostic("One-minute test blocked: missing authorization.", source: "App")
+            refresh()
+            return
+        }
+
+        guard hasSelection else {
+            scheduleError = "Pick at least one real app before starting the device test."
+            store.recordDiagnostic("One-minute test blocked: no real selection.", source: "App")
+            refresh()
+            return
+        }
+
+        #if targetEnvironment(simulator)
+        statusMessage = "Use Simulator demo mode here. The one-minute test needs an iPhone."
+        store.recordDiagnostic("One-minute test skipped in Simulator.", source: "App")
+        refresh()
+        #else
+        do {
+            try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: 1)
+            dailyBudgetMinutes = 1
+            store.dailyBudgetMinutes = 1
+            store.markMonitoringStarted()
+            store.isBudgetExceededToday = false
+            store.clearBypassWindow()
+            isMonitoringEnabled = true
+            scheduleError = nil
+            statusMessage = "One-minute device test is running. Open a selected app for over a minute."
+            store.recordDiagnostic("One-minute device test started.", source: "App")
+        } catch {
+            store.isMonitoringEnabled = false
+            store.lastScheduleError = error.localizedDescription
+            isMonitoringEnabled = false
+            scheduleError = error.localizedDescription
+            statusMessage = "Device test could not start."
+            store.recordDiagnostic("One-minute device test failed: \(error.localizedDescription)", source: "App")
+        }
+        refresh()
+        #endif
+    }
+
+    func applyShieldNowForDeviceTest() {
+        guard hasSelection else {
+            scheduleError = "Pick at least one real app before applying a test shield."
+            store.recordDiagnostic("Manual shield blocked: no real selection.", source: "App")
+            refresh()
+            return
+        }
+
+        ScreenTimeShielding.applyShield(for: selection)
+        store.markBudgetExceeded()
+        statusMessage = "Manual shield applied. Open a selected app to verify the block."
+        store.recordDiagnostic("Manual shield applied from Settings.", source: "App")
+        refresh()
+    }
+
+    func clearShieldForDeviceTest() {
+        ScreenTimeShielding.clearShield()
+        store.clearBypassWindow()
+        statusMessage = "Manual shield cleared."
+        store.recordDiagnostic("Manual shield cleared from Settings.", source: "App")
+        refresh()
+    }
+
     func refresh() {
         enforceExpiredBypassIfNeeded()
         #if targetEnvironment(simulator)
@@ -198,6 +271,10 @@ final class TimeTankModel {
         bypassExpiresAt = store.bypassExpiresAt
         diagnostics = store.diagnostics
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
+        activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
+        lastMonitoringStartDate = store.lastMonitoringStartDate
+        lastShieldApplyDate = store.lastShieldApplyDate
+        lastShieldClearDate = store.lastShieldClearDate
         scheduleError = store.lastScheduleError
     }
 

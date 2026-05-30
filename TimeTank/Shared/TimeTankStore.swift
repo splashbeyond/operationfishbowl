@@ -77,6 +77,21 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.simulatorDemoSelectionEnabled) }
     }
 
+    var lastMonitoringStartDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastMonitoringStartDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastMonitoringStartDate) }
+    }
+
+    var lastShieldApplyDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastShieldApplyDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastShieldApplyDate) }
+    }
+
+    var lastShieldClearDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastShieldClearDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastShieldClearDate) }
+    }
+
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
@@ -110,6 +125,20 @@ final class TimeTankStore {
 
     func markBudgetExceeded() {
         isBudgetExceededToday = true
+    }
+
+    func markMonitoringStarted(now: Date = Date()) {
+        isMonitoringEnabled = true
+        lastMonitoringStartDate = now
+        lastScheduleError = nil
+    }
+
+    func markShieldApplied(now: Date = Date()) {
+        lastShieldApplyDate = now
+    }
+
+    func markShieldCleared(now: Date = Date()) {
+        lastShieldClearDate = now
     }
 
     @discardableResult

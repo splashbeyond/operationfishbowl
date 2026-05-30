@@ -7,7 +7,15 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
 
-        guard activity == TimeTankConstants.dailyActivityName else { return }
+        if activity == TimeTankConstants.bypassActivityName {
+            store.recordDiagnostic("Bypass interval started.", source: "Monitor")
+            return
+        }
+
+        guard activity == TimeTankConstants.dailyActivityName else {
+            store.recordDiagnostic("Unknown interval started: \(String(describing: activity)).", source: "Monitor")
+            return
+        }
 
         store.awardCleanDayIfNeeded()
         ScreenTimeShielding.clearShield()
@@ -23,7 +31,12 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
 
             if store.shouldReapplyShield() {
                 ScreenTimeShielding.applyShield(for: store.selection)
+                store.recordDiagnostic("Shield reapplied after bypass interval ended.", source: "Monitor")
             }
+        }
+
+        if activity == TimeTankConstants.dailyActivityName {
+            store.recordDiagnostic("Daily interval ended.", source: "Monitor")
         }
     }
 

@@ -8,11 +8,17 @@ enum ScreenTimeShielding {
         store.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
         store.shield.applicationCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
         store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
-        TimeTankStore().recordDiagnostic("Applied shield to current selection.", source: "Shield")
+        store.shield.webDomainCategories = selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
+
+        let timeTankStore = TimeTankStore()
+        timeTankStore.markShieldApplied()
+        timeTankStore.recordDiagnostic("Applied shield to \(selection.applicationTokens.count) app(s), \(selection.categoryTokens.count) category token(s), \(selection.webDomainTokens.count) web domain(s).", source: "Shield")
     }
 
     static func clearShield() {
         ManagedSettingsStore(named: TimeTankConstants.managedStoreName).clearAllSettings()
-        TimeTankStore().recordDiagnostic("Cleared managed settings shield.", source: "Shield")
+        let store = TimeTankStore()
+        store.markShieldCleared()
+        store.recordDiagnostic("Cleared managed settings shield.", source: "Shield")
     }
 }

@@ -18,6 +18,10 @@ struct SettingsView: View {
                             statusRow(title: "Budget", value: "\(model.dailyBudgetMinutes) min")
                             statusRow(title: "Budget state", value: model.isBudgetExceededToday ? "Spent today" : "Available")
                             statusRow(title: "Bypass", value: bypassStatus)
+                            statusRow(title: "Active schedules", value: model.activeActivitySummary)
+                            statusRow(title: "Monitoring started", value: formatted(model.lastMonitoringStartDate))
+                            statusRow(title: "Last shield apply", value: formatted(model.lastShieldApplyDate))
+                            statusRow(title: "Last shield clear", value: formatted(model.lastShieldClearDate))
                             statusRow(title: "App Group", value: TimeTankConstants.appGroupIdentifier)
                         }
                     }
@@ -72,6 +76,48 @@ struct SettingsView: View {
 
                     PrimaryButton(title: "Request Authorization", systemImage: "person.badge.shield.checkmark") {
                         Task { await model.requestAuthorization() }
+                    }
+
+                    TimeTankCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("DEVICE VERIFICATION")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color.textMuted)
+
+                            Text("For real-device testing: pick one obvious app, start the one-minute test, use that app for over a minute, then check diagnostics for a threshold callback and shield apply event.")
+                                .font(.timeTankBody(14))
+                                .foregroundStyle(Color.textDark)
+
+                            Button {
+                                model.startOneMinuteDeviceTest()
+                            } label: {
+                                Label("Start 1-Minute Test", systemImage: "timer")
+                                    .font(.timeTankButton())
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.tideOrange)
+
+                            Button {
+                                model.applyShieldNowForDeviceTest()
+                            } label: {
+                                Label("Apply Shield Now", systemImage: "shield.lefthalf.filled")
+                                    .font(.timeTankButton())
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.tideOrange)
+
+                            Button {
+                                model.clearShieldForDeviceTest()
+                            } label: {
+                                Label("Clear Shield", systemImage: "shield.slash")
+                                    .font(.timeTankButton())
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.coral)
+                        }
                     }
 
                     Button {
@@ -149,5 +195,10 @@ struct SettingsView: View {
 
         let minutes = max(1, Int(ceil(Double(seconds) / 60)))
         return "\(minutes) min left"
+    }
+
+    private func formatted(_ date: Date?) -> String {
+        guard let date else { return "Never" }
+        return date.formatted(date: .omitted, time: .shortened)
     }
 }
