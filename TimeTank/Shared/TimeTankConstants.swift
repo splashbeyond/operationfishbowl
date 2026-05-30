@@ -15,7 +15,7 @@ enum TimeTankConstants {
 
     static let defaultBudgetMinutes = 45
     static let bypassWindowMinutes = 15
-    static let pollutionIncrement = 0.2
+    static let pollutionIncrement = TimeTankRules.bypassPollutionIncrement
 }
 
 enum TimeTankDefaultsKey {
@@ -33,6 +33,7 @@ enum TimeTankDefaultsKey {
     static let diagnostics = "diagnostics"
     static let simulatorDemoSelectionEnabled = "simulatorDemoSelectionEnabled"
     static let lastMonitoringStartDate = "lastMonitoringStartDate"
+    static let lastThresholdDate = "lastThresholdDate"
     static let lastShieldApplyDate = "lastShieldApplyDate"
     static let lastShieldClearDate = "lastShieldClearDate"
 }

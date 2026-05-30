@@ -40,6 +40,10 @@
 		10000000000000000000001F /* TimeTankReportExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001C /* TimeTankReportExtension.swift */; };
 		100000000000000000000020 /* TimeTankConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000C /* TimeTankConstants.swift */; };
 		100000000000000000000021 /* TimeTankReport.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 200000000000000000000104 /* TimeTankReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		100000000000000000000022 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
+		100000000000000000000023 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
+		100000000000000000000024 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
+		100000000000000000000025 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +125,7 @@
 		20000000000000000000001C /* TimeTankReportExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeTankReportExtension.swift; sourceTree = "<group>"; };
 		20000000000000000000001D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		20000000000000000000001E /* TimeTankReport.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TimeTankReport.entitlements; sourceTree = "<group>"; };
+		20000000000000000000001F /* TimeTankRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeTankRules.swift; sourceTree = "<group>"; };
 		200000000000000000000100 /* TimeTank.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeTank.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000101 /* TimeTankMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000102 /* TimeTankShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -213,6 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				20000000000000000000000C /* TimeTankConstants.swift */,
+				20000000000000000000001F /* TimeTankRules.swift */,
 				20000000000000000000000D /* TimeTankStore.swift */,
 				20000000000000000000000E /* ScreenTimeShielding.swift */,
 				20000000000000000000000F /* ScreenTimeScheduler.swift */,
@@ -470,6 +476,7 @@
 				100000000000000000000009 /* CurrentsView.swift in Sources */,
 				10000000000000000000000A /* SettingsView.swift in Sources */,
 				10000000000000000000001E /* OnboardingView.swift in Sources */,
+				100000000000000000000022 /* TimeTankRules.swift in Sources */,
 				10000000000000000000000C /* TimeTankConstants.swift in Sources */,
 				10000000000000000000000D /* TimeTankStore.swift in Sources */,
 				10000000000000000000000E /* ScreenTimeShielding.swift in Sources */,
@@ -482,6 +489,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000010 /* TimeTankMonitorExtension.swift in Sources */,
+				100000000000000000000023 /* TimeTankRules.swift in Sources */,
 				100000000000000000000011 /* TimeTankConstants.swift in Sources */,
 				100000000000000000000012 /* TimeTankStore.swift in Sources */,
 				100000000000000000000013 /* ScreenTimeShielding.swift in Sources */,
@@ -493,6 +501,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000014 /* TimeTankShieldActionExtension.swift in Sources */,
+				100000000000000000000024 /* TimeTankRules.swift in Sources */,
 				100000000000000000000015 /* TimeTankConstants.swift in Sources */,
 				100000000000000000000016 /* TimeTankStore.swift in Sources */,
 				100000000000000000000017 /* ScreenTimeShielding.swift in Sources */,
@@ -513,6 +522,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				10000000000000000000001F /* TimeTankReportExtension.swift in Sources */,
+				100000000000000000000025 /* TimeTankRules.swift in Sources */,
 				100000000000000000000020 /* TimeTankConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -2,6 +2,20 @@
 
 The simulator cannot validate Apple Screen Time permissions, usage reporting, threshold callbacks, or shields. Use a signed physical iPhone.
 
+## Local Logic Test
+
+Run the pure MVP rules verifier before opening Xcode:
+
+```sh
+swiftc TimeTank/Shared/TimeTankRules.swift Scripts/verify_mvp_rules.swift -o /tmp/verify_timetank_mvp_rules && /tmp/verify_timetank_mvp_rules
+```
+
+Expected output:
+
+```text
+MVP rules verification passed.
+```
+
 ## Preflight
 
 1. Confirm the Apple Developer account and provisioning profiles include `com.apple.developer.family-controls` for the app and all extensions.

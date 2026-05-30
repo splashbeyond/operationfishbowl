@@ -63,8 +63,25 @@ struct BudgetSetupView: View {
                                 .foregroundStyle(Color.textDark)
                                 .contentTransition(.numericText())
 
+                            HStack(spacing: 8) {
+                                ForEach([15, 30, 60, 120], id: \.self) { preset in
+                                    Button {
+                                        budgetMinutes = preset
+                                    } label: {
+                                        Text(preset == 60 ? "1 hr" : preset == 120 ? "2 hr" : "\(preset)m")
+                                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 9)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .foregroundStyle(budgetMinutes == preset ? Color.white : Color.tideOrange)
+                                    .background(budgetMinutes == preset ? Color.tideOrange : Color.tideOrange.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                }
+                            }
+
                             Stepper(value: $budgetMinutes, in: 5...240, step: 5) {
-                                Text("How long is fair?")
+                                Text("How long is fair for these apps?")
                                     .font(.timeTankBody())
                                     .foregroundStyle(Color.textDark)
                             }

@@ -22,9 +22,9 @@ struct TankDashboardView: View {
                                 .font(.timeTankHeading(17))
                                 .foregroundStyle(Color.textDark)
 
-                            BudgetProgressBar(progress: min(1, model.pollutionLevel))
+                            BudgetProgressBar(progress: model.pollutionLevel)
 
-                            Text("\(model.remainingMinutesEstimate) min remaining")
+                            Text(model.budgetBoundaryText)
                                 .font(.timeTankBody(14))
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -79,11 +79,19 @@ struct TankDashboardView: View {
     private var screenTimeCard: some View {
         TimeTankCard {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Your Screen Time")
+                Text("Your Distraction Time")
                     .font(.timeTankHeading(17))
                     .foregroundStyle(Color.textDark)
 
-                if model.isAuthorized {
+                if model.isRunningInSimulator {
+                    Text("Real usage reports require a signed iPhone. Simulator only exercises the demo flow.")
+                        .font(.timeTankBody(14))
+                        .foregroundStyle(Color.textMuted)
+                } else if !model.hasSelection {
+                    Text("Pick distractions first. TimeTank only judges the apps you choose.")
+                        .font(.timeTankBody(14))
+                        .foregroundStyle(Color.textMuted)
+                } else if model.isAuthorized {
                     DeviceActivityReport(
                         .init(TimeTankConstants.reportContextIdentifier),
                         filter: todayFilter
@@ -109,7 +117,10 @@ struct TankDashboardView: View {
         return DeviceActivityFilter(
             segment: .daily(during: interval),
             users: .all,
-            devices: .init([.iPhone])
+            devices: .init([.iPhone]),
+            applications: model.selection.applicationTokens,
+            categories: model.selection.categoryTokens,
+            webDomains: model.selection.webDomainTokens
         )
     }
 }

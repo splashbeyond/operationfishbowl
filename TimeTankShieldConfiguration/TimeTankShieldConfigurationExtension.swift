@@ -29,7 +29,7 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
                 color: UIColor(red: 0.11, green: 0.102, blue: 0.094, alpha: 1.0)
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "Finn's watching. Open anyway?",
+                text: "Opening this will make the tank murkier.",
                 color: UIColor(red: 0.522, green: 0.475, blue: 0.459, alpha: 1.0)
             ),
             primaryButtonLabel: ShieldConfiguration.Label(

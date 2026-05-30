@@ -18,6 +18,7 @@ final class TimeTankModel {
     var isSimulatorDemoSelectionEnabled: Bool
     var activeActivitySummary: String
     var lastMonitoringStartDate: Date?
+    var lastThresholdDate: Date?
     var lastShieldApplyDate: Date?
     var lastShieldClearDate: Date?
     var statusMessage = "Pick the apps that eat your time."
@@ -38,6 +39,7 @@ final class TimeTankModel {
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
         lastMonitoringStartDate = store.lastMonitoringStartDate
+        lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate
         scheduleError = store.lastScheduleError
@@ -65,8 +67,16 @@ final class TimeTankModel {
         return selectedTokens > 0 ? selectedTokens : (isSimulatorDemoSelectionEnabled ? 1 : 0)
     }
 
-    var remainingMinutesEstimate: Int {
-        max(0, Int(Double(dailyBudgetMinutes) * (1 - pollutionLevel)))
+    var murkinessState: TimeTankMurkinessState {
+        TimeTankRules.murkinessState(
+            usageProgress: nil,
+            isBudgetExceeded: isBudgetExceededToday,
+            pollutionLevel: pollutionLevel
+        )
+    }
+
+    var budgetBoundaryText: String {
+        TimeTankRules.statusMessage(for: murkinessState, budgetMinutes: dailyBudgetMinutes)
     }
 
     var isRunningInSimulator: Bool {
@@ -273,6 +283,7 @@ final class TimeTankModel {
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
         lastMonitoringStartDate = store.lastMonitoringStartDate
+        lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate
         scheduleError = store.lastScheduleError

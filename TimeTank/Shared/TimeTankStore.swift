@@ -82,6 +82,11 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastMonitoringStartDate) }
     }
 
+    var lastThresholdDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastThresholdDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastThresholdDate) }
+    }
+
     var lastShieldApplyDate: Date? {
         get { defaults.object(forKey: TimeTankDefaultsKey.lastShieldApplyDate) as? Date }
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastShieldApplyDate) }
@@ -119,12 +124,18 @@ final class TimeTankStore {
     }
 
     func incrementPollution(by amount: Double = TimeTankConstants.pollutionIncrement) {
-        pollutionLevel = pollutionLevel + amount
+        if amount == TimeTankConstants.pollutionIncrement {
+            pollutionLevel = TimeTankRules.pollutionAfterBypass(currentPollution: pollutionLevel)
+        } else {
+            pollutionLevel = TimeTankRules.clampedPollution(pollutionLevel + amount)
+        }
         lastBypassDate = Date()
     }
 
-    func markBudgetExceeded() {
+    func markBudgetExceeded(now: Date = Date()) {
         isBudgetExceededToday = true
+        lastThresholdDate = now
+        pollutionLevel = TimeTankRules.pollutionAfterBudgetReached(currentPollution: pollutionLevel)
     }
 
     func markMonitoringStarted(now: Date = Date()) {
@@ -186,6 +197,7 @@ final class TimeTankStore {
         bypassExpiresAt = nil
         isBudgetExceededToday = false
         lastScheduleError = nil
+        lastThresholdDate = nil
     }
 
     func recordDiagnostic(_ message: String, source: String, now: Date = Date()) {
@@ -202,7 +214,7 @@ final class TimeTankStore {
     }
 
     private static func clampPollution(_ value: Double) -> Double {
-        min(1, max(0, value))
+        TimeTankRules.clampedPollution(value)
     }
 
     private static func dayKey(for date: Date, calendar: Calendar) -> String {
