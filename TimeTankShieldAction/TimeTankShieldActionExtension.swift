@@ -42,10 +42,7 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
 
             completionHandler(.none)
 
-        case .defer:
-            completionHandler(.defer)
-
-        default:
+        @unknown default:
             completionHandler(.none)
         }
     }
