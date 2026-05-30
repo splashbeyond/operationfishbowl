@@ -18,6 +18,8 @@ MVP rules verification passed.
 MVP acceptance verification passed.
 ```
 
+The `mvp` branch also has a GitHub Actions workflow at `.github/workflows/mvp.yml` that runs both MVP verifiers, lints project metadata, and attempts an unsigned iOS Simulator build.
+
 ## Preflight
 
 1. Confirm the Apple Developer account and provisioning profiles include `com.apple.developer.family-controls` for the app and all extensions.

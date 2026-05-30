@@ -25,6 +25,16 @@ struct VerifyMVPAcceptance {
         let settings = try read("TimeTank/App/SettingsView.swift")
         let scheduler = try read("TimeTank/Shared/ScreenTimeScheduler.swift")
         let budget = try read("TimeTank/App/BudgetSetupView.swift")
+        let project = try read("TimeTank.xcodeproj/project.pbxproj")
+        let appEntitlements = try read("TimeTank/TimeTank.entitlements")
+        let monitorEntitlements = try read("TimeTankMonitor/TimeTankMonitor.entitlements")
+        let actionEntitlements = try read("TimeTankShieldAction/TimeTankShieldAction.entitlements")
+        let configEntitlements = try read("TimeTankShieldConfiguration/TimeTankShieldConfiguration.entitlements")
+        let reportEntitlements = try read("TimeTankReport/TimeTankReport.entitlements")
+        let monitorInfo = try read("TimeTankMonitor/Info.plist")
+        let actionInfo = try read("TimeTankShieldAction/Info.plist")
+        let configInfo = try read("TimeTankShieldConfiguration/Info.plist")
+        let reportInfo = try read("TimeTankReport/Info.plist")
 
         try expect(
             !dashboard.contains("DeviceActivityReport"),
@@ -81,6 +91,43 @@ struct VerifyMVPAcceptance {
             budget.contains("How long is fair for these apps?"),
             "Budget setup must prioritize simple selected-app budget presets."
         )
+        try expect(
+            project.contains("TimeTankReport.appex in Embed App Extensions") &&
+            project.contains("TimeTankMonitor.appex in Embed App Extensions") &&
+            project.contains("TimeTankShieldAction.appex in Embed App Extensions") &&
+            project.contains("TimeTankShieldConfiguration.appex in Embed App Extensions"),
+            "All Screen Time extensions must be embedded in the app target."
+        )
+        try expect(
+            project.contains("TimeTankRules.swift") &&
+            project.contains("TimeTankRules.swift in Sources"),
+            "TimeTankRules must be part of Xcode source membership."
+        )
+        for (name, entitlements) in [
+            ("app", appEntitlements),
+            ("monitor", monitorEntitlements),
+            ("shield action", actionEntitlements),
+            ("shield configuration", configEntitlements),
+            ("report", reportEntitlements)
+        ] {
+            try expect(
+                entitlements.contains("com.apple.developer.family-controls") &&
+                entitlements.contains("group.com.piperstudio.timetank"),
+                "\(name) entitlements must include Family Controls and the shared App Group."
+            )
+        }
+        for (name, info) in [
+            ("monitor", monitorInfo),
+            ("shield action", actionInfo),
+            ("shield configuration", configInfo),
+            ("report", reportInfo)
+        ] {
+            try expect(
+                info.contains("CFBundleExecutable") &&
+                info.contains("NSExtensionPointIdentifier"),
+                "\(name) extension Info.plist must include executable and extension point metadata."
+            )
+        }
 
         print("MVP acceptance verification passed.")
     }
