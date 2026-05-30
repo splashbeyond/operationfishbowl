@@ -33,10 +33,8 @@ struct FocusTankView: View {
                             width:  canvasSize.width  * 0.562,
                             height: canvasSize.height * 0.47
                         )
-                        // Bowl-shaped clip: straight sides at the top so the water
-                        // surface spans full width, large semicircle at the bottom
-                        // to match the bowl's rounded base.
-                        let rTop = interior.width * 0.06
+                        // Wider top corners narrow the clip to match the bowl's rim
+                        let rTop = interior.width * 0.18
                         let rBot = interior.width * 0.53
                         var clipPath = Path()
                         clipPath.move(to: CGPoint(x: interior.minX + rTop, y: interior.minY))
@@ -56,7 +54,7 @@ struct FocusTankView: View {
 
                         // Water opacity thickens as pollution rises
                         let water         = waterPath(in: interior, time: time)
-                        let surfaceY      = interior.maxY - interior.height * (0.84 + pollutionLevel * 0.12)
+                        let surfaceY      = interior.maxY - interior.height * (0.80 + pollutionLevel * 0.06)
                         let topOpacity    = 0.38 + pollutionLevel * 0.30
                         let bottomOpacity = 0.52 + pollutionLevel * 0.28
                         ctx.fill(water, with: .linearGradient(
@@ -113,7 +111,7 @@ struct FocusTankView: View {
     }
 
     private func waterPath(in rect: CGRect, time: TimeInterval) -> Path {
-        let fill     = 0.84 + pollutionLevel * 0.12
+        let fill     = 0.80 + pollutionLevel * 0.06  // max 86% — never reaches the bowl rim
         let baseline = rect.maxY - rect.height * fill
         let freq     = Double.pi * 2.0 / Double(rect.width)
         let shift    = time * 1.3
