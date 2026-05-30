@@ -33,28 +33,21 @@ struct FocusTankView: View {
                             width:  canvasSize.width  * 0.562,
                             height: canvasSize.height * 0.47
                         )
-                        // Wider top corners narrow the clip to match the bowl's rim
-                        let rTop = interior.width * 0.18
-                        let rBot = interior.width * 0.53
-                        var clipPath = Path()
-                        clipPath.move(to: CGPoint(x: interior.minX + rTop, y: interior.minY))
-                        clipPath.addLine(to: CGPoint(x: interior.maxX - rTop, y: interior.minY))
-                        clipPath.addQuadCurve(to: CGPoint(x: interior.maxX, y: interior.minY + rTop),
-                                              control: CGPoint(x: interior.maxX, y: interior.minY))
-                        clipPath.addLine(to: CGPoint(x: interior.maxX, y: interior.maxY - rBot))
-                        clipPath.addQuadCurve(to: CGPoint(x: interior.midX, y: interior.maxY),
-                                              control: CGPoint(x: interior.maxX, y: interior.maxY))
-                        clipPath.addQuadCurve(to: CGPoint(x: interior.minX, y: interior.maxY - rBot),
-                                              control: CGPoint(x: interior.minX, y: interior.maxY))
-                        clipPath.addLine(to: CGPoint(x: interior.minX, y: interior.minY + rTop))
-                        clipPath.addQuadCurve(to: CGPoint(x: interior.minX + rTop, y: interior.minY),
-                                              control: CGPoint(x: interior.minX, y: interior.minY))
-                        clipPath.closeSubpath()
-                        ctx.clip(to: clipPath)
+                        // Elliptical clip — widest in the middle, narrows naturally
+                        // at top and bottom to follow the round bowl glass.
+                        // Extending above/below the interior shifts the ellipse centre
+                        // to roughly the bowl's widest point.
+                        let clipEllipse = CGRect(
+                            x: interior.minX + interior.width  * 0.04,
+                            y: interior.minY - interior.height * 0.10,
+                            width:  interior.width  * 0.92,
+                            height: interior.height * 1.22
+                        )
+                        ctx.clip(to: Path(ellipseIn: clipEllipse))
 
                         // Water opacity thickens as pollution rises
                         let water         = waterPath(in: interior, time: time)
-                        let surfaceY      = interior.maxY - interior.height * (0.80 + pollutionLevel * 0.06)
+                        let surfaceY      = interior.maxY - interior.height * (0.76 + pollutionLevel * 0.05)
                         let topOpacity    = 0.38 + pollutionLevel * 0.30
                         let bottomOpacity = 0.52 + pollutionLevel * 0.28
                         ctx.fill(water, with: .linearGradient(
@@ -111,7 +104,7 @@ struct FocusTankView: View {
     }
 
     private func waterPath(in rect: CGRect, time: TimeInterval) -> Path {
-        let fill     = 0.80 + pollutionLevel * 0.06  // max 86% — never reaches the bowl rim
+        let fill     = 0.76 + pollutionLevel * 0.05  // max 86% — never reaches the bowl rim
         let baseline = rect.maxY - rect.height * fill
         let freq     = Double.pi * 2.0 / Double(rect.width)
         let shift    = time * 1.3
