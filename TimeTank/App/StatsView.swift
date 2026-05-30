@@ -39,7 +39,7 @@ struct StatsView: View {
                                     .foregroundStyle(Color.textDark)
                             } else if model.hasSelection {
                                 DeviceActivityReport(reportContext, filter: reportFilter)
-                                    .frame(minHeight: 220)
+                                    .frame(minHeight: CGFloat(model.selectedItemCount) * 56 + 80)
                             } else {
                                 Text("Pick distractions first. The report uses those selected app, category, and web tokens.")
                                     .font(.timeTankBody())
