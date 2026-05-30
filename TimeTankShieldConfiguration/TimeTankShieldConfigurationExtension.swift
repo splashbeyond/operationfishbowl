@@ -63,13 +63,9 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
         )
     }
 
-    // Load Finn face from the containing app's asset bundle, fall back to drawn icon
+    // Load Finn face from the extension's own bundle (images must be added to this target in Xcode)
     private func finnFaceImage(named name: String) -> UIImage? {
-        let containerURL = Bundle.main.bundleURL
-            .deletingLastPathComponent()  // PlugIns/
-            .deletingLastPathComponent()  // TimeTank.app/
-        if let containerBundle = Bundle(url: containerURL),
-           let image = UIImage(named: name, in: containerBundle, compatibleWith: nil) {
+        if let image = UIImage(named: name, in: Bundle(for: TimeTankShieldConfigurationExtension.self), compatibleWith: nil) {
             return scaledToFill(image, size: CGSize(width: 300, height: 300))
         }
         return finnFallbackIcon()
