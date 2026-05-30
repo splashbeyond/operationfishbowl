@@ -8,7 +8,7 @@ struct TimeTankReportExtension: DeviceActivityReportExtension {
             TimeTankUsageReportView(configuration: configuration)
         }
         TimeTankAllAppsReport { configuration in
-            TimeTankUsageReportView(configuration: configuration)
+            TimeTankScreenTimeReportView(configuration: configuration)
         }
     }
 }
@@ -75,34 +75,27 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
 
 struct TimeTankAllAppsReport: DeviceActivityReportScene {
     let context = DeviceActivityReport.Context(TimeTankConstants.allAppsReportContextIdentifier)
-    let content: (TimeTankUsageReportConfiguration) -> TimeTankUsageReportView
+    let content: (TimeTankUsageReportConfiguration) -> TimeTankScreenTimeReportView
 
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> TimeTankUsageReportConfiguration {
         var configuration = TimeTankUsageReportConfiguration()
-        var appMap: [String: (duration: TimeInterval, pickups: Int)] = [:]
+        var allDailyTotals: [TimeInterval] = []
 
         for await activityData in data {
-            configuration.lastUpdated = max(configuration.lastUpdated ?? activityData.lastUpdatedDate, activityData.lastUpdatedDate)
-
+            var dayTotal: TimeInterval = 0
             for await segment in activityData.activitySegments {
-                configuration.totalDuration += segment.totalActivityDuration
+                dayTotal += segment.totalActivityDuration
+            }
+            allDailyTotals.append(dayTotal)
 
-                for await category in segment.categories {
-                    for await application in category.applications {
-                        let name = application.application.localizedDisplayName ?? "App"
-                        let existing = appMap[name] ?? (duration: 0, pickups: 0)
-                        appMap[name] = (
-                            duration: existing.duration + application.totalActivityDuration,
-                            pickups: existing.pickups + application.numberOfPickups
-                        )
-                    }
-                }
+            if Calendar.current.isDateInToday(activityData.lastUpdatedDate) {
+                configuration.totalDuration = dayTotal
+                configuration.lastUpdated = activityData.lastUpdatedDate
             }
         }
 
-        configuration.topApps = appMap
-            .map { AppUsageItem(name: $0.key, duration: $0.value.duration, pickups: $0.value.pickups) }
-            .sorted { $0.duration > $1.duration }
+        // Divide by 7 so days with no recorded usage still pull the average down
+        configuration.sevenDayAverage = allDailyTotals.reduce(0, +) / 7.0
 
         return configuration
     }
@@ -125,6 +118,7 @@ struct TimeTankUsageReportConfiguration {
     var firstPickup: Date?
     var lastUpdated: Date?
     var topApps: [AppUsageItem] = []
+    var sevenDayAverage: TimeInterval = 0
 
     var displayedDuration: TimeInterval {
         selectedAppDuration > 0 ? selectedAppDuration : totalDuration
@@ -200,6 +194,54 @@ struct TimeTankUsageReportView: View {
             }
         }
         .padding(14)
+    }
+
+    private func durationString(_ interval: TimeInterval) -> String {
+        let minutes = max(0, Int(interval / 60))
+        let hours = minutes / 60
+        let remaining = minutes % 60
+        if hours > 0 { return "\(hours)h \(remaining)m" }
+        if minutes == 0 { return "< 1m" }
+        return "\(minutes)m"
+    }
+}
+
+struct TimeTankScreenTimeReportView: View {
+    let configuration: TimeTankUsageReportConfiguration
+
+    private let textDark   = Color(red: 0.11, green: 0.102, blue: 0.094)
+    private let textMuted  = Color(red: 0.522, green: 0.475, blue: 0.459)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(durationString(configuration.totalDuration))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(textDark)
+                Text("today")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(textMuted)
+                Spacer()
+                if let lastUpdated = configuration.lastUpdated {
+                    Text(lastUpdated.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(textMuted)
+                }
+            }
+
+            if configuration.sevenDayAverage > 0 {
+                HStack(spacing: 4) {
+                    Text("7-day avg")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(textMuted)
+                    Text("\(durationString(configuration.sevenDayAverage)) / day")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(textDark)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(4)
     }
 
     private func durationString(_ interval: TimeInterval) -> String {

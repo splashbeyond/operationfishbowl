@@ -60,7 +60,7 @@ struct StatsView: View {
                                     .foregroundStyle(Color.textDark)
                             } else {
                                 DeviceActivityReport(allAppsReportContext, filter: allAppsReportFilter)
-                                    .frame(minHeight: 220)
+                                    .frame(minHeight: 80)
                             }
                         }
                     }
@@ -85,9 +85,13 @@ struct StatsView: View {
     }
 
     private var allAppsReportFilter: DeviceActivityFilter {
-        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval(start: Date(), duration: 24 * 60 * 60)
+        let calendar = Calendar.current
+        let today = Date()
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) ?? today
+        let start = calendar.startOfDay(for: sevenDaysAgo)
+        let end = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: today) ?? today
         return DeviceActivityFilter(
-            segment: .daily(during: interval),
+            segment: .daily(during: DateInterval(start: start, end: end)),
             users: .all,
             devices: .init([.iPhone, .iPad])
         )
