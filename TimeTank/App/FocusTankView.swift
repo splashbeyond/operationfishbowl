@@ -6,13 +6,12 @@ struct FocusTankView: View {
     var body: some View {
         TimelineView(.animation) { timeline in
             let time        = timeline.date.timeIntervalSinceReferenceDate
-            let speed       = max(0.25, 1.0 - pollutionLevel * 0.72)
-            let tremble     = pollutionLevel > 0.15
-                                ? sin(time * 17.0) * (pollutionLevel - 0.15) * 4.5
-                                : 0.0
-            let bob         = sin(time * speed * 1.2) * 10.0 + tremble
-            let swayRange   = 22.0 * (1.0 - pollutionLevel * 0.55)
-            let sway        = cos(time * speed * 0.7) * swayRange
+            // Movement fades from full at 40% pollution to zero at 100%
+            let movementFactor = pollutionLevel <= 0.4
+                ? 1.0
+                : max(0.0, 1.0 - (pollutionLevel - 0.4) / 0.6)
+            let bob         = sin(time * 1.2) * 10.0 * movementFactor
+            let sway        = cos(time * 0.7) * 22.0 * movementFactor
             let facingRight = sway >= 0
 
             GeometryReader { geo in
@@ -117,31 +116,14 @@ struct FocusTankView: View {
         let fill     = 0.84 + pollutionLevel * 0.12
         let baseline = rect.maxY - rect.height * fill
         let freq     = Double.pi * 2.0 / Double(rect.width)
-
-        // Primary wave — gentle when clean, slightly bigger when murky
-        let primaryAmp   = 3.0 + pollutionLevel * 2.5
-        let primarySpeed = 1.4 - pollutionLevel * 0.45
-        let primaryShift = time * primarySpeed
-
-        // Turbulence — kicks in at 20% pollution, full strength at 100%
-        let turbStrength = max(0.0, (pollutionLevel - 0.2) / 0.8)
-        let turbAmp      = turbStrength * 8.0
-        let turbShift    = time * (primarySpeed * 1.85 + turbStrength * 0.6)
-
-        // High-frequency chop — kicks in at 50%, peaks at 100%
-        let chopStrength = max(0.0, (pollutionLevel - 0.5) / 0.5)
-        let chopAmp      = chopStrength * 4.5
-        let chopShift    = time * 3.8
+        let shift    = time * 1.3
 
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.minX, y: baseline))
         stride(from: rect.minX, through: rect.maxX, by: 2).forEach { x in
             let xd = Double(x) - Double(rect.minX)
-            let y  = baseline
-                + sin(xd * freq * 2.4           + primaryShift) * primaryAmp
-                + sin(xd * freq * 4.1           + turbShift)    * turbAmp
-                + sin(xd * freq * 8.3           + chopShift)    * chopAmp
+            let y  = baseline + sin(xd * freq * 2.4 + shift) * 3.5
             path.addLine(to: CGPoint(x: x, y: y))
         }
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
