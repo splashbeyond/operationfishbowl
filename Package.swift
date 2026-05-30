@@ -9,7 +9,8 @@ let package = Package(
     ],
     products: [
         .library(name: "TimeTankCoreRules", targets: ["TimeTankCoreRules"]),
-        .executable(name: "TimeTankMVPVerifier", targets: ["TimeTankMVPVerifier"])
+        .executable(name: "TimeTankMVPVerifier", targets: ["TimeTankMVPVerifier"]),
+        .executable(name: "TimeTankMVPAcceptanceVerifier", targets: ["TimeTankMVPAcceptanceVerifier"])
     ],
     targets: [
         .target(
@@ -27,7 +28,14 @@ let package = Package(
             name: "TimeTankMVPVerifier",
             dependencies: ["TimeTankCoreRules"],
             path: "Scripts",
+            exclude: ["verify_mvp_acceptance.swift"],
             sources: ["verify_mvp_rules.swift"]
+        ),
+        .executableTarget(
+            name: "TimeTankMVPAcceptanceVerifier",
+            path: "Scripts",
+            exclude: ["verify_mvp_rules.swift"],
+            sources: ["verify_mvp_acceptance.swift"]
         )
     ]
 )

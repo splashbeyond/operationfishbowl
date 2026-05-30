@@ -8,12 +8,14 @@ Run the pure MVP rules verifier before opening Xcode:
 
 ```sh
 swift run TimeTankMVPVerifier
+swift run TimeTankMVPAcceptanceVerifier
 ```
 
 Expected output:
 
 ```text
 MVP rules verification passed.
+MVP acceptance verification passed.
 ```
 
 ## Preflight
