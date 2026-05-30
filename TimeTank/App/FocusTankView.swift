@@ -7,8 +7,12 @@ struct FocusTankView: View {
         TimelineView(.animation) { timeline in
             let time        = timeline.date.timeIntervalSinceReferenceDate
             let speed       = max(0.25, 1.0 - pollutionLevel * 0.72)
-            let bob         = sin(time * speed * 1.2) * 10.0
-            let sway        = cos(time * speed * 0.7) * 22.0
+            let tremble     = pollutionLevel > 0.15
+                                ? sin(time * 17.0) * (pollutionLevel - 0.15) * 4.5
+                                : 0.0
+            let bob         = sin(time * speed * 1.2) * 10.0 + tremble
+            let swayRange   = 22.0 * (1.0 - pollutionLevel * 0.55)
+            let sway        = cos(time * speed * 0.7) * swayRange
             let facingRight = sway >= 0
 
             GeometryReader { geo in
@@ -51,20 +55,22 @@ struct FocusTankView: View {
                         clipPath.closeSubpath()
                         ctx.clip(to: clipPath)
 
-                        // Water fill — gradient fade at surface so it blends into glass
-                        let water = waterPath(in: interior, time: time)
-                        let surfaceY = interior.maxY - interior.height * (0.84 + pollutionLevel * 0.12)
+                        // Water opacity thickens as pollution rises
+                        let water         = waterPath(in: interior, time: time)
+                        let surfaceY      = interior.maxY - interior.height * (0.84 + pollutionLevel * 0.12)
+                        let topOpacity    = 0.38 + pollutionLevel * 0.30
+                        let bottomOpacity = 0.52 + pollutionLevel * 0.28
                         ctx.fill(water, with: .linearGradient(
                             Gradient(stops: [
-                                .init(color: waterColor.opacity(0.0),  location: 0.0),
-                                .init(color: waterColor.opacity(0.38), location: 0.18),
-                                .init(color: waterColor.opacity(0.52), location: 1.0)
+                                .init(color: waterColor.opacity(0.0),          location: 0.0),
+                                .init(color: waterColor.opacity(topOpacity),    location: 0.18),
+                                .init(color: waterColor.opacity(bottomOpacity), location: 1.0)
                             ]),
                             startPoint: CGPoint(x: interior.midX, y: surfaceY),
                             endPoint:   CGPoint(x: interior.midX, y: interior.maxY)
                         ))
 
-                        drawBubbles(in: &ctx, rect: interior, time: time)
+                        drawParticles(in: &ctx, rect: interior, time: time)
                     }
                     .frame(width: size, height: size)
 
@@ -84,32 +90,46 @@ struct FocusTankView: View {
         .padding(3)
     }
 
-    // Water color shifts from teal → amber → muddy as pollution rises
+    // Smooth interpolation: teal → amber → muddy brown
     private var waterColor: Color {
-        switch pollutionLevel {
-        case 0..<0.25:
-            return Color(red: 0.0,  green: 0.75, blue: 0.65) // Tank Teal
-        case 0.25..<0.5:
-            return Color(red: 0.3,  green: 0.78, blue: 0.68) // muted teal
-        case 0.5..<0.75:
-            return Color(red: 1.0,  green: 0.67, blue: 0.25) // amber
-        default:
-            return Color(red: 0.71, green: 0.40, blue: 0.11) // muddy brown
+        if pollutionLevel < 0.5 {
+            let t = pollutionLevel / 0.5
+            return Color(red: t * 1.0, green: 0.75 - t * 0.08, blue: 0.65 - t * 0.40)
+        } else {
+            let t = (pollutionLevel - 0.5) / 0.5
+            return Color(red: 1.0 - t * 0.29, green: 0.67 - t * 0.27, blue: 0.25 - t * 0.14)
         }
     }
 
     private func waterPath(in rect: CGRect, time: TimeInterval) -> Path {
-        let fill      = 0.84 + pollutionLevel * 0.12
-        let baseline  = rect.maxY - rect.height * fill
-        let amplitude = max(2.0, 7.0 - pollutionLevel * 4.0)
-        let freq      = Double.pi * 2.0 / Double(rect.width)
-        let shift     = time * (1.3 - pollutionLevel * 0.75)
+        let fill     = 0.84 + pollutionLevel * 0.12
+        let baseline = rect.maxY - rect.height * fill
+        let freq     = Double.pi * 2.0 / Double(rect.width)
+
+        // Primary wave — gentle when clean, slightly bigger when murky
+        let primaryAmp   = 3.0 + pollutionLevel * 2.5
+        let primarySpeed = 1.4 - pollutionLevel * 0.45
+        let primaryShift = time * primarySpeed
+
+        // Turbulence — kicks in at 20% pollution, full strength at 100%
+        let turbStrength = max(0.0, (pollutionLevel - 0.2) / 0.8)
+        let turbAmp      = turbStrength * 8.0
+        let turbShift    = time * (primarySpeed * 1.85 + turbStrength * 0.6)
+
+        // High-frequency chop — kicks in at 50%, peaks at 100%
+        let chopStrength = max(0.0, (pollutionLevel - 0.5) / 0.5)
+        let chopAmp      = chopStrength * 4.5
+        let chopShift    = time * 3.8
 
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.minX, y: baseline))
         stride(from: rect.minX, through: rect.maxX, by: 2).forEach { x in
-            let y = baseline + sin((Double(x) - Double(rect.minX)) * freq * 2.4 + shift) * amplitude
+            let xd = Double(x) - Double(rect.minX)
+            let y  = baseline
+                + sin(xd * freq * 2.4           + primaryShift) * primaryAmp
+                + sin(xd * freq * 4.1           + turbShift)    * turbAmp
+                + sin(xd * freq * 8.3           + chopShift)    * chopAmp
             path.addLine(to: CGPoint(x: x, y: y))
         }
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
@@ -117,17 +137,44 @@ struct FocusTankView: View {
         return path
     }
 
-    private func drawBubbles(in ctx: inout GraphicsContext, rect: CGRect, time: TimeInterval) {
-        for i in 0..<6 {
-            let spread  = Double(i % 3) * 0.28 + 0.15
-            let phase   = Double(i) * 0.43
-            let cycle   = (time * 0.055 + phase).truncatingRemainder(dividingBy: 1.0)
-            let x       = rect.minX + rect.width  * spread
-            let y       = rect.maxY - rect.height * CGFloat(cycle) * 0.9
-            let r       = CGFloat(2.0 + Double(i % 3) * 1.2)
-            let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
-            let opacity = min(cycle * 7.0, 1.0) * 0.60
-            ctx.stroke(bubble, with: .color(.white.opacity(opacity)), lineWidth: 1.2)
+    private func drawParticles(in ctx: inout GraphicsContext, rect: CGRect, time: TimeInterval) {
+        // Clean bubbles — fade out completely by 50% pollution
+        let bubbleVis = max(0.0, 1.0 - pollutionLevel * 2.0)
+        if bubbleVis > 0 {
+            for i in 0..<6 {
+                let spread  = Double(i % 3) * 0.28 + 0.15
+                let phase   = Double(i) * 0.43
+                let cycle   = (time * 0.055 + phase).truncatingRemainder(dividingBy: 1.0)
+                let x       = rect.minX + rect.width  * CGFloat(spread)
+                let y       = rect.maxY - rect.height * CGFloat(cycle) * 0.9
+                let r       = CGFloat(2.0 + Double(i % 3) * 1.2)
+                let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+                let opacity = min(cycle * 7.0, 1.0) * 0.60 * bubbleVis
+                ctx.stroke(bubble, with: .color(.white.opacity(opacity)), lineWidth: 1.2)
+            }
+        }
+
+        // Murky debris — appears at 20% pollution, grows heavier through 100%
+        guard pollutionLevel > 0.2 else { return }
+        let debrisStrength = (pollutionLevel - 0.2) / 0.8
+        let debrisCount    = Int(3 + debrisStrength * 8)
+
+        for i in 0..<debrisCount {
+            let seed    = Double(i)
+            let spread  = (seed * 0.137 + 0.08).truncatingRemainder(dividingBy: 0.82) + 0.08
+            let phase   = seed * 0.619
+            let speed   = 0.022 + seed.truncatingRemainder(dividingBy: 3.0) * 0.011
+            let cycle   = (time * speed + phase).truncatingRemainder(dividingBy: 1.0)
+            let wobble  = CGFloat(sin(time * 1.1 + phase) * Double(rect.width) * 0.032)
+            let x       = rect.minX + rect.width  * CGFloat(spread) + wobble
+            let y       = rect.maxY - rect.height * CGFloat(cycle)   * 0.88
+            let r       = CGFloat(1.0 + seed.truncatingRemainder(dividingBy: 4.0) * 0.85) * CGFloat(debrisStrength)
+            let opacity = min(cycle * 4.0, 1.0) * 0.50 * debrisStrength
+            // Debris shifts from warm-brown at low pollution to dark muddy at full
+            let dr = 0.62 + debrisStrength * 0.09
+            let dg = 0.38 - debrisStrength * 0.12
+            let particle = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+            ctx.fill(particle, with: .color(Color(red: dr, green: dg, blue: 0.08).opacity(opacity)))
         }
     }
 }
