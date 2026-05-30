@@ -24,6 +24,7 @@ struct SettingsView: View {
                             statusRow(title: "Threshold reached", value: formatted(model.lastThresholdDate))
                             statusRow(title: "Last shield apply", value: formatted(model.lastShieldApplyDate))
                             statusRow(title: "Last shield clear", value: formatted(model.lastShieldClearDate))
+                            statusRow(title: "Last shield action", value: formatted(model.lastShieldActionDate))
                             statusRow(title: "App Group", value: TimeTankConstants.appGroupIdentifier)
                         }
                     }

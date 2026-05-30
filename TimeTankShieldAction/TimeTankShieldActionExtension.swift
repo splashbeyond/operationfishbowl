@@ -21,10 +21,12 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
     private func handle(action: ShieldAction, completionHandler: @escaping (ShieldActionResponse) -> Void) {
         switch action {
         case .primaryButtonPressed:
+            store.markShieldAction()
             store.recordDiagnostic("Primary shield button tapped.", source: "ShieldAction")
             completionHandler(.close)
 
         case .secondaryButtonPressed:
+            store.markShieldAction()
             store.incrementPollution()
             let bypassStartedAt = Date()
             store.startBypassWindow(now: bypassStartedAt)

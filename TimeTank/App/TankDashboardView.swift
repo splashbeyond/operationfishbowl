@@ -1,4 +1,3 @@
-import DeviceActivity
 import SwiftUI
 
 struct TankDashboardView: View {
@@ -36,7 +35,7 @@ struct TankDashboardView: View {
                         }
                     }
 
-                    screenTimeCard
+                    distractionBudgetCard
                 }
                 .padding(20)
             }
@@ -76,29 +75,28 @@ struct TankDashboardView: View {
         .padding(.top, -12)
     }
 
-    private var screenTimeCard: some View {
+    private var distractionBudgetCard: some View {
         TimeTankCard {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Your Distraction Time")
+                Text("Distraction Budget")
                     .font(.timeTankHeading(17))
                     .foregroundStyle(Color.textDark)
 
-                if model.isRunningInSimulator {
-                    Text("Real usage reports require a signed iPhone. Simulator only exercises the demo flow.")
-                        .font(.timeTankBody(14))
-                        .foregroundStyle(Color.textMuted)
-                } else if !model.hasSelection {
+                if !model.hasEffectiveSelection {
                     Text("Pick distractions first. TimeTank only judges the apps you choose.")
                         .font(.timeTankBody(14))
                         .foregroundStyle(Color.textMuted)
-                } else if model.isAuthorized {
-                    DeviceActivityReport(
-                        .init(TimeTankConstants.reportContextIdentifier),
-                        filter: todayFilter
-                    )
-                    .frame(minHeight: 200)
                 } else {
-                    Text("Approve Screen Time access to see your usage.")
+                    HStack {
+                        Label("\(model.selectedItemCount) selected", systemImage: "square.grid.2x2")
+                        Spacer()
+                        Text("\(model.dailyBudgetMinutes) min")
+                            .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    }
+                    .font(.timeTankBody(14))
+                    .foregroundStyle(Color.textDark)
+
+                    Text(model.isMonitoringEnabled ? "Monitoring is on. Reports live in Stats." : "Start TimeTank to protect this budget.")
                         .font(.timeTankBody(14))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -112,17 +110,6 @@ struct TankDashboardView: View {
         return .tankTeal
     }
 
-    private var todayFilter: DeviceActivityFilter {
-        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval()
-        return DeviceActivityFilter(
-            segment: .daily(during: interval),
-            users: .all,
-            devices: .init([.iPhone]),
-            applications: model.selection.applicationTokens,
-            categories: model.selection.categoryTokens,
-            webDomains: model.selection.webDomainTokens
-        )
-    }
 }
 
 struct BudgetProgressBar: View {

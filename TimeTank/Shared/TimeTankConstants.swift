@@ -36,4 +36,5 @@ enum TimeTankDefaultsKey {
     static let lastThresholdDate = "lastThresholdDate"
     static let lastShieldApplyDate = "lastShieldApplyDate"
     static let lastShieldClearDate = "lastShieldClearDate"
+    static let lastShieldActionDate = "lastShieldActionDate"
 }

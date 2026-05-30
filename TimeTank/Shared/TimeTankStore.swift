@@ -97,6 +97,11 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastShieldClearDate) }
     }
 
+    var lastShieldActionDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastShieldActionDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastShieldActionDate) }
+    }
+
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
@@ -152,6 +157,10 @@ final class TimeTankStore {
         lastShieldClearDate = now
     }
 
+    func markShieldAction(now: Date = Date()) {
+        lastShieldActionDate = now
+    }
+
     @discardableResult
     func startBypassWindow(now: Date = Date()) -> Date {
         let expiresAt = Calendar.current.date(byAdding: .minute, value: TimeTankConstants.bypassWindowMinutes, to: now) ?? now
@@ -198,6 +207,7 @@ final class TimeTankStore {
         isBudgetExceededToday = false
         lastScheduleError = nil
         lastThresholdDate = nil
+        lastShieldActionDate = nil
     }
 
     func recordDiagnostic(_ message: String, source: String, now: Date = Date()) {

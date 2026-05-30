@@ -21,6 +21,7 @@ final class TimeTankModel {
     var lastThresholdDate: Date?
     var lastShieldApplyDate: Date?
     var lastShieldClearDate: Date?
+    var lastShieldActionDate: Date?
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -42,6 +43,7 @@ final class TimeTankModel {
         lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate
+        lastShieldActionDate = store.lastShieldActionDate
         scheduleError = store.lastScheduleError
         #if targetEnvironment(simulator)
         isAuthorized = true
@@ -286,6 +288,7 @@ final class TimeTankModel {
         lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate
+        lastShieldActionDate = store.lastShieldActionDate
         scheduleError = store.lastScheduleError
     }
 
