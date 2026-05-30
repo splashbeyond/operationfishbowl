@@ -28,13 +28,13 @@ let package = Package(
             name: "TimeTankMVPVerifier",
             dependencies: ["TimeTankCoreRules"],
             path: "Scripts",
-            exclude: ["verify_mvp_acceptance.swift"],
+            exclude: ["run_mvp_preflight.sh", "verify_mvp_acceptance.swift"],
             sources: ["verify_mvp_rules.swift"]
         ),
         .executableTarget(
             name: "TimeTankMVPAcceptanceVerifier",
             path: "Scripts",
-            exclude: ["verify_mvp_rules.swift"],
+            exclude: ["run_mvp_preflight.sh", "verify_mvp_rules.swift"],
             sources: ["verify_mvp_acceptance.swift"]
         )
     ]

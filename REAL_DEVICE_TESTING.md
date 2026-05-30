@@ -7,8 +7,7 @@ The simulator cannot validate Apple Screen Time permissions, usage reporting, th
 Run the pure MVP rules verifier before opening Xcode:
 
 ```sh
-swift run TimeTankMVPVerifier
-swift run TimeTankMVPAcceptanceVerifier
+Scripts/run_mvp_preflight.sh --skip-ios-build
 ```
 
 Expected output:
@@ -18,7 +17,7 @@ MVP rules verification passed.
 MVP acceptance verification passed.
 ```
 
-The `mvp` branch also has a GitHub Actions workflow at `.github/workflows/mvp.yml` that runs both MVP verifiers, lints project metadata, and attempts an unsigned iOS Simulator build.
+The `mvp` branch also has a GitHub Actions workflow at `.github/workflows/mvp.yml` that runs `Scripts/run_mvp_preflight.sh` without `--skip-ios-build`, so CI runs both MVP verifiers, lints project metadata, and attempts an unsigned iOS Simulator build.
 
 ## Preflight
 

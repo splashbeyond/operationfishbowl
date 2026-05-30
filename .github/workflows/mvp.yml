@@ -21,31 +21,5 @@ jobs:
           xcode-select -p
           xcodebuild -version
 
-      - name: Run MVP rule verifier
-        run: swift run TimeTankMVPVerifier
-
-      - name: Run MVP acceptance verifier
-        run: swift run TimeTankMVPAcceptanceVerifier
-
-      - name: Lint project metadata
-        run: |
-          plutil -lint TimeTank.xcodeproj/project.pbxproj
-          plutil -lint TimeTank/TimeTank.entitlements
-          plutil -lint TimeTankMonitor/Info.plist
-          plutil -lint TimeTankMonitor/TimeTankMonitor.entitlements
-          plutil -lint TimeTankShieldAction/Info.plist
-          plutil -lint TimeTankShieldAction/TimeTankShieldAction.entitlements
-          plutil -lint TimeTankShieldConfiguration/Info.plist
-          plutil -lint TimeTankShieldConfiguration/TimeTankShieldConfiguration.entitlements
-          plutil -lint TimeTankReport/Info.plist
-          plutil -lint TimeTankReport/TimeTankReport.entitlements
-
-      - name: Build unsigned iOS simulator app
-        run: |
-          xcodebuild \
-            -project TimeTank.xcodeproj \
-            -scheme TimeTank \
-            -destination 'generic/platform=iOS Simulator' \
-            -configuration Debug \
-            CODE_SIGNING_ALLOWED=NO \
-            build
+      - name: Run MVP preflight
+        run: Scripts/run_mvp_preflight.sh
