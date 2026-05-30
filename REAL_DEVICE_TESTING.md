@@ -7,7 +7,7 @@ The simulator cannot validate Apple Screen Time permissions, usage reporting, th
 Run the pure MVP rules verifier before opening Xcode:
 
 ```sh
-swiftc TimeTank/Shared/TimeTankRules.swift Scripts/verify_mvp_rules.swift -o /tmp/verify_timetank_mvp_rules && /tmp/verify_timetank_mvp_rules
+swift run TimeTankMVPVerifier
 ```
 
 Expected output:

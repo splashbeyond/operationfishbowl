@@ -1,4 +1,5 @@
 import Foundation
+import TimeTankCoreRules
 
 struct RuleFailure: Error, CustomStringConvertible {
     let description: String
