@@ -44,6 +44,7 @@
 		100000000000000000000023 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
 		100000000000000000000024 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
 		100000000000000000000025 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
+		100000000000000000000026 /* ShieldAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000026 /* ShieldAssets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,6 +127,7 @@
 		20000000000000000000001D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		20000000000000000000001E /* TimeTankReport.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TimeTankReport.entitlements; sourceTree = "<group>"; };
 		20000000000000000000001F /* TimeTankRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeTankRules.swift; sourceTree = "<group>"; };
+		200000000000000000000026 /* ShieldAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ShieldAssets.xcassets; sourceTree = "<group>"; };
 		200000000000000000000100 /* TimeTank.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeTank.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000101 /* TimeTankMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000102 /* TimeTankShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -250,6 +252,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000012 /* TimeTankShieldConfigurationExtension.swift */,
+				200000000000000000000026 /* ShieldAssets.xcassets */,
 				200000000000000000000019 /* Info.plist */,
 				200000000000000000000016 /* TimeTankShieldConfiguration.entitlements */,
 			);
@@ -448,6 +451,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				100000000000000000000026 /* ShieldAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
