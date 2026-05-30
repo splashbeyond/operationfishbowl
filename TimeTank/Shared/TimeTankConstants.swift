@@ -15,7 +15,7 @@ enum TimeTankConstants {
     static let allAppsReportContextIdentifier = "TimeTank.usage.all"
 
     static let defaultBudgetMinutes = 45
-    static let bypassWindowMinutes = 15
+    static let bypassWindowMinutes = 1
     static let pollutionIncrement = TimeTankRules.bypassPollutionIncrement
 }
 
