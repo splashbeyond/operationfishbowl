@@ -38,7 +38,7 @@ struct StatsView: View {
                                     .font(.timeTankBody())
                                     .foregroundStyle(Color.textDark)
                             } else if model.hasSelection {
-                                DeviceActivityReport(TimeTankConstants.reportContext, filter: reportFilter)
+                                DeviceActivityReport(reportContext, filter: reportFilter)
                                     .frame(minHeight: 220)
                             } else {
                                 Text("Pick distractions first. The report uses those selected app, category, and web tokens.")
@@ -66,5 +66,9 @@ struct StatsView: View {
             categories: model.selection.categoryTokens,
             webDomains: model.selection.webDomainTokens
         )
+    }
+
+    private var reportContext: DeviceActivityReport.Context {
+        DeviceActivityReport.Context(TimeTankConstants.reportContextIdentifier)
     }
 }

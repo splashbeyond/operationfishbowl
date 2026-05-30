@@ -11,7 +11,7 @@ struct TimeTankReportExtension: DeviceActivityReportExtension {
 }
 
 struct TimeTankUsageReport: DeviceActivityReportScene {
-    let context: DeviceActivityReport.Context = TimeTankConstants.reportContext
+    let context = DeviceActivityReport.Context(TimeTankConstants.reportContextIdentifier)
     let content: (TimeTankUsageReportConfiguration) -> TimeTankUsageReportView
 
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> TimeTankUsageReportConfiguration {

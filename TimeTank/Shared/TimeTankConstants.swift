@@ -11,7 +11,7 @@ enum TimeTankConstants {
     static let budgetEventName = DeviceActivityEvent.Name("TimeTank.event.budgetReached")
     static let bypassActivityName = DeviceActivityName("TimeTank.bypass.cooldown")
     static let bypassEventName = DeviceActivityEvent.Name("TimeTank.event.bypassEnded")
-    static let reportContext = DeviceActivityReport.Context("TimeTank.usage.summary")
+    static let reportContextIdentifier = "TimeTank.usage.summary"
 
     static let defaultBudgetMinutes = 45
     static let bypassWindowMinutes = 15
