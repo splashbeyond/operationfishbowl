@@ -28,20 +28,11 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
         case .secondaryButtonPressed:
             store.markShieldAction()
             store.incrementBypassCount()
-            let bypassStartedAt = Date()
-            store.startBypassWindow(now: bypassStartedAt)
+            store.startBypassWindow(now: Date())
             ScreenTimeShielding.clearShield()
+            // Bypass cooldown scheduling is handled by the main app on next foreground activation,
+            // since DeviceActivityCenter.startMonitoring is unreliable from inside extensions.
             store.recordDiagnostic("Secondary shield button tapped; bypass started.", source: "ShieldAction")
-
-            do {
-                try ScreenTimeScheduler.startBypassCooldown(selection: store.selection, now: bypassStartedAt)
-                store.lastScheduleError = nil
-                store.recordDiagnostic("Bypass cooldown monitoring started.", source: "ShieldAction")
-            } catch {
-                store.lastScheduleError = error.localizedDescription
-                store.recordDiagnostic("Bypass schedule failed: \(error.localizedDescription)", source: "ShieldAction")
-            }
-
             completionHandler(.close)
 
         @unknown default:

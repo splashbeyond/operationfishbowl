@@ -1,3 +1,4 @@
+import DeviceActivity
 import FamilyControls
 import Foundation
 import Observation
@@ -56,6 +57,7 @@ final class TimeTankModel {
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         enforceExpiredBypassIfNeeded()
+        autoRestartMonitoringIfNeeded()
     }
 
     var hasSelection: Bool {
@@ -107,6 +109,7 @@ final class TimeTankModel {
             authorizationError = nil
             statusMessage = "Authorization ready. Finn can watch the tank."
             store.recordDiagnostic("Authorization request completed: \(isAuthorized ? "approved" : "not approved").", source: "App")
+            autoStartIfReady()
         } catch {
             isAuthorized = false
             authorizationError = error.localizedDescription
@@ -129,6 +132,7 @@ final class TimeTankModel {
         statusMessage = hasSelection ? "Selection saved. Finn has a reason to care." : "Pick something. Finn needs a reason to care."
         store.recordDiagnostic("Selection saved with \(selectedItemCount) item(s).", source: "App")
         refresh()
+        autoStartIfReady()
     }
 
     func enableSimulatorDemoSelection() {
@@ -273,6 +277,7 @@ final class TimeTankModel {
     func refresh() {
         store.recalculatePollution()
         enforceExpiredBypassIfNeeded()
+        autoRestartMonitoringIfNeeded()
         #if targetEnvironment(simulator)
         isAuthorized = true
         #else
@@ -328,9 +333,41 @@ final class TimeTankModel {
     }
     #endif
 
-    private func enforceExpiredBypassIfNeeded() {
-        guard store.isMonitoringEnabled, store.shouldReapplyShield() else { return }
+    // Start monitoring for the first time if all conditions are met and it hasn't started yet
+    private func autoStartIfReady() {
+        #if !targetEnvironment(simulator)
+        guard isAuthorized, hasEffectiveSelection, !isMonitoringEnabled else { return }
+        startMonitoring()
+        #endif
+    }
 
+    // Re-start daily monitoring if it was previously enabled but the DeviceActivity schedule
+    // was lost (e.g. after app reinstall or OS restart clears the system schedule)
+    private func autoRestartMonitoringIfNeeded() {
+        #if !targetEnvironment(simulator)
+        guard isAuthorized, hasEffectiveSelection, store.isMonitoringEnabled else { return }
+        guard DeviceActivityCenter().activities.isEmpty else { return }
+        startMonitoring()
+        #endif
+    }
+
+    private func enforceExpiredBypassIfNeeded() {
+        // If bypass is still active but cooldown schedule is missing, start it now from the main app
+        if store.isBypassActive(), store.isMonitoringEnabled, store.hasSelection {
+            let activities = DeviceActivityCenter().activities
+            if !activities.contains(TimeTankConstants.bypassActivityName) {
+                if let expiresAt = store.bypassExpiresAt {
+                    let remaining = expiresAt.timeIntervalSinceNow
+                    if remaining > 0 {
+                        let startNow = Date()
+                        try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, now: startNow)
+                        store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
+                    }
+                }
+            }
+        }
+
+        guard store.isMonitoringEnabled, store.shouldReapplyShield() else { return }
         ScreenTimeShielding.applyShield(for: store.selection)
         store.clearBypassWindow()
         store.recordDiagnostic("Expired bypass recovered from app foreground.", source: "App")
