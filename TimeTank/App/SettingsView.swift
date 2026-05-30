@@ -168,6 +168,8 @@ struct SettingsView: View {
                             .buttonStyle(.bordered)
                         }
                     }
+
+                    TankPreviewCard()
                     #endif
                 }
                 .padding(20)

@@ -74,20 +74,32 @@ struct FocusTankView: View {
                     }
                     .frame(width: size, height: size)
 
-                    // 3. Finn on top — swims left/right, bobs, faces direction of travel
-                    Image("FinnMascot")
+                    // 3. Finn — face swaps with crossfade at each pollution threshold
+                    Image(finnFaceName)
                         .resizable()
                         .scaledToFit()
                         .frame(width: finnSize)
                         .scaleEffect(x: facingRight ? 1 : -1, y: 1)
                         .offset(x: sway, y: size * 0.05 + bob)
                         .opacity(1.0 - pollutionLevel * 0.28)
+                        .animation(.easeInOut(duration: 0.6), value: finnFaceName)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(3)
+    }
+
+    // Face asset name keyed to pollution threshold
+    private var finnFaceName: String {
+        switch pollutionLevel {
+        case 0..<0.2:  return "FinnMascot"           // Blissful — clean tank
+        case 0.2..<0.4: return "FinnMascotAlert"     // Alert — first bypass
+        case 0.4..<0.6: return "FinnMascotWorried"   // Worried — two bypasses
+        case 0.6..<1.0: return "FinnMascotDistressed" // Distressed — 3–4 bypasses
+        default:        return "FinnMascotSuffering"  // Suffering — max pollution
+        }
     }
 
     // Smooth interpolation: teal → amber → muddy brown
