@@ -42,7 +42,7 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
                 store.recordDiagnostic("Bypass schedule failed: \(error.localizedDescription)", source: "ShieldAction")
             }
 
-            completionHandler(.none)
+            completionHandler(.close)
 
         @unknown default:
             completionHandler(.none)

@@ -70,9 +70,29 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
             .deletingLastPathComponent()  // TimeTank.app/
         if let containerBundle = Bundle(url: containerURL),
            let image = UIImage(named: name, in: containerBundle, compatibleWith: nil) {
-            return image
+            return scaledToFill(image, size: CGSize(width: 300, height: 300))
         }
         return finnFallbackIcon()
+    }
+
+    // Scale image to fill a square canvas — removes padding so the face fills the icon slot
+    private func scaledToFill(_ image: UIImage, size: CGSize) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in
+            let imageAspect = image.size.width / image.size.height
+            let canvasAspect = size.width / size.height
+            let drawRect: CGRect
+            if imageAspect > canvasAspect {
+                let h = size.height
+                let w = h * imageAspect
+                drawRect = CGRect(x: (size.width - w) / 2, y: 0, width: w, height: h)
+            } else {
+                let w = size.width
+                let h = w / imageAspect
+                drawRect = CGRect(x: 0, y: (size.height - h) / 2, width: w, height: h)
+            }
+            image.draw(in: drawRect)
+        }
     }
 
     private func finnFallbackIcon() -> UIImage? {
