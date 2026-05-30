@@ -27,7 +27,7 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
 
         case .secondaryButtonPressed:
             store.markShieldAction()
-            store.incrementPollution()
+            store.incrementBypassCount()
             let bypassStartedAt = Date()
             store.startBypassWindow(now: bypassStartedAt)
             ScreenTimeShielding.clearShield()

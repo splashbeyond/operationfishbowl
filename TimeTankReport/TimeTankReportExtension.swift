@@ -7,6 +7,9 @@ struct TimeTankReportExtension: DeviceActivityReportExtension {
         TimeTankUsageReport { configuration in
             TimeTankUsageReportView(configuration: configuration)
         }
+        TimeTankAllAppsReport { configuration in
+            TimeTankUsageReportView(configuration: configuration)
+        }
     }
 }
 
@@ -49,6 +52,49 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
 
                     for await webDomain in category.webDomains {
                         configuration.webDuration += webDomain.totalActivityDuration
+                    }
+                }
+            }
+        }
+
+        configuration.topApps = appMap
+            .map { AppUsageItem(name: $0.key, duration: $0.value.duration, pickups: $0.value.pickups) }
+            .sorted { $0.duration > $1.duration }
+
+        // Write overflow seconds to shared defaults so the main app can recalculate pollution
+        if let sharedDefaults = UserDefaults(suiteName: TimeTankConstants.appGroupIdentifier) {
+            let budgetMinutes = sharedDefaults.integer(forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
+            let effectiveBudget = Double(budgetMinutes > 0 ? budgetMinutes : TimeTankConstants.defaultBudgetMinutes) * 60.0
+            let overflow = max(0.0, configuration.selectedAppDuration - effectiveBudget)
+            sharedDefaults.set(overflow, forKey: TimeTankDefaultsKey.overflowSeconds)
+        }
+
+        return configuration
+    }
+}
+
+struct TimeTankAllAppsReport: DeviceActivityReportScene {
+    let context = DeviceActivityReport.Context(TimeTankConstants.allAppsReportContextIdentifier)
+    let content: (TimeTankUsageReportConfiguration) -> TimeTankUsageReportView
+
+    func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> TimeTankUsageReportConfiguration {
+        var configuration = TimeTankUsageReportConfiguration()
+        var appMap: [String: (duration: TimeInterval, pickups: Int)] = [:]
+
+        for await activityData in data {
+            configuration.lastUpdated = max(configuration.lastUpdated ?? activityData.lastUpdatedDate, activityData.lastUpdatedDate)
+
+            for await segment in activityData.activitySegments {
+                configuration.totalDuration += segment.totalActivityDuration
+
+                for await category in segment.categories {
+                    for await application in category.applications {
+                        let name = application.application.localizedDisplayName ?? "App"
+                        let existing = appMap[name] ?? (duration: 0, pickups: 0)
+                        appMap[name] = (
+                            duration: existing.duration + application.totalActivityDuration,
+                            pickups: existing.pickups + application.numberOfPickups
+                        )
                     }
                 }
             }

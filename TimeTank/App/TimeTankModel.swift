@@ -22,6 +22,8 @@ final class TimeTankModel {
     var lastShieldApplyDate: Date?
     var lastShieldClearDate: Date?
     var lastShieldActionDate: Date?
+    var bypassCount: Int
+    var overflowSeconds: TimeInterval
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -29,6 +31,8 @@ final class TimeTankModel {
     private let store = TimeTankStore()
 
     init() {
+        bypassCount = store.bypassCount
+        overflowSeconds = store.overflowSeconds
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -267,6 +271,7 @@ final class TimeTankModel {
     }
 
     func refresh() {
+        store.recalculatePollution()
         enforceExpiredBypassIfNeeded()
         #if targetEnvironment(simulator)
         isAuthorized = true
@@ -275,6 +280,8 @@ final class TimeTankModel {
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         pollutionLevel = store.pollutionLevel
+        bypassCount = store.bypassCount
+        overflowSeconds = store.overflowSeconds
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection
@@ -306,7 +313,10 @@ final class TimeTankModel {
 
     #if DEBUG
     func debugAddPollution() {
-        store.incrementPollution()
+        store.isBudgetExceededToday = true
+        store.bypassCount += 1
+        store.overflowSeconds += Double(store.dailyBudgetMinutes) * 60.0 * 0.1
+        store.recalculatePollution()
         refresh()
         statusMessage = "The water just got murkier."
     }

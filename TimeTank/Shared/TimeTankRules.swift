@@ -26,6 +26,14 @@ public enum TimeTankRules {
         clampedPollution(currentPollution + bypassPollutionIncrement)
     }
 
+    public static func continuousPollution(overflowSeconds: TimeInterval, budgetMinutes: Int, bypassCount: Int) -> Double {
+        guard budgetMinutes > 0 else { return maximumPollution }
+        let budgetSeconds = Double(budgetMinutes) * 60.0
+        let basePollution = min(1.0, overflowSeconds / budgetSeconds)
+        let bypassPenalty = Double(bypassCount) * 0.05
+        return clampedPollution(basePollution + bypassPenalty)
+    }
+
     public static func usageProgress(usedMinutes: Int, budgetMinutes: Int) -> Double {
         guard budgetMinutes > 0 else { return spentUsageProgress }
         return max(0, Double(usedMinutes) / Double(budgetMinutes))

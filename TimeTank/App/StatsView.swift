@@ -29,7 +29,7 @@ struct StatsView: View {
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("SCREEN TIME REPORT")
+                            Text("DISTRACTION APPS")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color.textMuted)
 
@@ -47,6 +47,23 @@ struct StatsView: View {
                             }
                         }
                     }
+
+                    TimeTankCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("YOUR SCREEN TIME")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color.textMuted)
+
+                            if model.isRunningInSimulator {
+                                Text("Total iPhone usage across all apps renders on a signed device with Screen Time authorization.")
+                                    .font(.timeTankBody())
+                                    .foregroundStyle(Color.textDark)
+                            } else {
+                                DeviceActivityReport(allAppsReportContext, filter: allAppsReportFilter)
+                                    .frame(minHeight: 220)
+                            }
+                        }
+                    }
                 }
                 .padding(20)
             }
@@ -57,7 +74,6 @@ struct StatsView: View {
 
     private var reportFilter: DeviceActivityFilter {
         let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval(start: Date(), duration: 24 * 60 * 60)
-
         return DeviceActivityFilter(
             segment: .daily(during: interval),
             users: .all,
@@ -68,7 +84,20 @@ struct StatsView: View {
         )
     }
 
+    private var allAppsReportFilter: DeviceActivityFilter {
+        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval(start: Date(), duration: 24 * 60 * 60)
+        return DeviceActivityFilter(
+            segment: .daily(during: interval),
+            users: .all,
+            devices: .init([.iPhone, .iPad])
+        )
+    }
+
     private var reportContext: DeviceActivityReport.Context {
         DeviceActivityReport.Context(TimeTankConstants.reportContextIdentifier)
+    }
+
+    private var allAppsReportContext: DeviceActivityReport.Context {
+        DeviceActivityReport.Context(TimeTankConstants.allAppsReportContextIdentifier)
     }
 }
