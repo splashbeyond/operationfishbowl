@@ -11,7 +11,8 @@ struct TankDashboardView: View {
                     header
 
                     FocusTankView(pollutionLevel: model.pollutionLevel)
-                        .frame(height: 290)
+                        .frame(height: 360)
+                        .padding(.bottom, -70)
 
                     pollutionDisplay
 

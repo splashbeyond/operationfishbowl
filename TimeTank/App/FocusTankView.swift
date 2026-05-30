@@ -81,7 +81,7 @@ struct FocusTankView: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .padding(10)
+        .padding(3)
     }
 
     // Water color shifts from teal → amber → muddy as pollution rises

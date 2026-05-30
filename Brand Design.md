@@ -310,6 +310,10 @@ Fill: Teal `#00BFA5` from 0–79%, shifts to Amber `#FFAB40` from 80–99%, Mudd
 
 Mascot:  (His name is Finn)
 ![[ChatGPT Image May 28, 2026, 09_33_54 PM.png]]
+Finn's Bowl Only:
+![[ChatGPT Image May 28, 2026, 10_40_56 PM.png]]
+
+
 Finn in his bowl:
 
 ![[ChatGPT Image May 28, 2026, 09_55_29 PM.png]]
