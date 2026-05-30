@@ -1,3 +1,4 @@
+import DeviceActivity
 import SwiftUI
 
 struct TankDashboardView: View {
@@ -6,12 +7,13 @@ struct TankDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: 10) {
                     header
 
                     FocusTankView(pollutionLevel: model.pollutionLevel)
-                        .frame(height: 400)
-                        .padding(.vertical, 8)
+                        .frame(height: 290)
+
+                    pollutionDisplay
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
@@ -21,17 +23,9 @@ struct TankDashboardView: View {
 
                             BudgetProgressBar(progress: min(1, model.pollutionLevel))
 
-                            HStack {
-                                Text("\(model.remainingMinutesEstimate) min remaining")
-                                    .font(.timeTankBody(14))
-                                    .foregroundStyle(Color.textMuted)
-
-                                Spacer()
-
-                                Text("\(Int(model.pollutionLevel * 100))% murky")
-                                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(pollutionColor)
-                            }
+                            Text("\(model.remainingMinutesEstimate) min remaining")
+                                .font(.timeTankBody(14))
+                                .foregroundStyle(Color.textMuted)
                         }
                     }
 
@@ -40,6 +34,8 @@ struct TankDashboardView: View {
                             model.startMonitoring()
                         }
                     }
+
+                    screenTimeCard
                 }
                 .padding(20)
             }
@@ -66,10 +62,54 @@ struct TankDashboardView: View {
         }
     }
 
+    private var pollutionDisplay: some View {
+        VStack(spacing: 4) {
+            Text("\(Int(model.pollutionLevel * 100))")
+                .font(.timeTankMetric(56))
+                .foregroundStyle(pollutionColor)
+            Text("% murky")
+                .font(.timeTankBody(13))
+                .foregroundStyle(Color.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, -12)
+    }
+
+    private var screenTimeCard: some View {
+        TimeTankCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Your Screen Time")
+                    .font(.timeTankHeading(17))
+                    .foregroundStyle(Color.textDark)
+
+                if model.isAuthorized {
+                    DeviceActivityReport(
+                        .init(TimeTankConstants.reportContextIdentifier),
+                        filter: todayFilter
+                    )
+                    .frame(minHeight: 200)
+                } else {
+                    Text("Approve Screen Time access to see your usage.")
+                        .font(.timeTankBody(14))
+                        .foregroundStyle(Color.textMuted)
+                }
+            }
+        }
+    }
+
     private var pollutionColor: Color {
         if model.pollutionLevel >= 1 { return .muddyBrown }
         if model.pollutionLevel >= 0.8 { return .amber }
         return .tankTeal
+    }
+
+    private var todayFilter: DeviceActivityFilter {
+        let interval = Calendar.current.dateInterval(of: .day, for: Date()) ?? DateInterval()
+        return DeviceActivityFilter(
+            segment: .daily(during: interval),
+            users: .all,
+            devices: .init([.iPhone])
+        )
     }
 }
 

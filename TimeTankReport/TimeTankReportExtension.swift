@@ -16,6 +16,7 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
 
     func makeConfiguration(representing data: DeviceActivityResults<DeviceActivityData>) async -> TimeTankUsageReportConfiguration {
         var configuration = TimeTankUsageReportConfiguration()
+        var appMap: [String: (duration: TimeInterval, pickups: Int)] = [:]
 
         for await activityData in data {
             configuration.lastUpdated = max(configuration.lastUpdated ?? activityData.lastUpdatedDate, activityData.lastUpdatedDate)
@@ -37,6 +38,13 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
                         configuration.selectedAppDuration += application.totalActivityDuration
                         configuration.appPickups += application.numberOfPickups
                         configuration.notifications += application.numberOfNotifications
+
+                        let name = application.application.localizedDisplayName ?? "App"
+                        let existing = appMap[name] ?? (duration: 0, pickups: 0)
+                        appMap[name] = (
+                            duration: existing.duration + application.totalActivityDuration,
+                            pickups: existing.pickups + application.numberOfPickups
+                        )
                     }
 
                     for await webDomain in category.webDomains {
@@ -46,8 +54,18 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
             }
         }
 
+        configuration.topApps = appMap
+            .map { AppUsageItem(name: $0.key, duration: $0.value.duration, pickups: $0.value.pickups) }
+            .sorted { $0.duration > $1.duration }
+
         return configuration
     }
+}
+
+struct AppUsageItem {
+    let name: String
+    let duration: TimeInterval
+    let pickups: Int
 }
 
 struct TimeTankUsageReportConfiguration {
@@ -60,6 +78,7 @@ struct TimeTankUsageReportConfiguration {
     var notifications = 0
     var firstPickup: Date?
     var lastUpdated: Date?
+    var topApps: [AppUsageItem] = []
 
     var displayedDuration: TimeInterval {
         selectedAppDuration > 0 ? selectedAppDuration : totalDuration
@@ -73,68 +92,76 @@ struct TimeTankUsageReportConfiguration {
 struct TimeTankUsageReportView: View {
     let configuration: TimeTankUsageReportConfiguration
 
+    private let tideOrange = Color(red: 1.0, green: 0.42, blue: 0.169)
+    private let textDark   = Color(red: 0.11, green: 0.102, blue: 0.094)
+    private let textMuted  = Color(red: 0.522, green: 0.475, blue: 0.459)
+    private let peachFoam  = Color(red: 1.0, green: 0.91, blue: 0.839)
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 0) {
+            // Total time header
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(durationString(configuration.displayedDuration))
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(textDark)
                 Text("today")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(textMuted)
+                Spacer()
+                if let lastUpdated = configuration.lastUpdated {
+                    Text(lastUpdated.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(textMuted)
+                }
             }
+            .padding(.bottom, 14)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                metric("Pickups", "\(configuration.totalPickups)", "Direct and device pickups")
-                metric("Notifications", "\(configuration.notifications)", "From selected apps")
-                metric("First pickup", firstPickupString, "Today")
-                metric("Longest", durationString(configuration.longestSession), "Single session")
-            }
+            if configuration.topApps.isEmpty {
+                Text("No usage recorded yet today.")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundStyle(textMuted)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(Array(configuration.topApps.enumerated()), id: \.offset) { index, app in
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(tideOrange.opacity(0.12))
+                            .frame(width: 32, height: 32)
+                            .overlay {
+                                Text(String(app.name.prefix(1)).uppercased())
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundStyle(tideOrange)
+                            }
 
-            if let lastUpdated = configuration.lastUpdated {
-                Text("Updated \(lastUpdated.formatted(date: .omitted, time: .shortened))")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+                        Text(app.name)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(textDark)
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        Text(durationString(app.duration))
+                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(textMuted)
+                    }
+                    .padding(.vertical, 9)
+
+                    if index < configuration.topApps.count - 1 {
+                        Divider()
+                            .background(peachFoam)
+                    }
+                }
             }
         }
         .padding(14)
     }
 
-    private var firstPickupString: String {
-        guard let firstPickup = configuration.firstPickup else { return "None" }
-        return firstPickup.formatted(date: .omitted, time: .shortened)
-    }
-
-    private func metric(_ title: String, _ value: String, _ caption: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            Text(caption)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
     private func durationString(_ interval: TimeInterval) -> String {
         let minutes = max(0, Int(interval / 60))
         let hours = minutes / 60
-        let remainingMinutes = minutes % 60
-
-        if hours > 0 {
-            return "\(hours)h \(remainingMinutes)m"
-        }
-
-        return "\(remainingMinutes)m"
+        let remaining = minutes % 60
+        if hours > 0 { return "\(hours)h \(remaining)m" }
+        if minutes == 0 { return "< 1m" }
+        return "\(minutes)m"
     }
 }
