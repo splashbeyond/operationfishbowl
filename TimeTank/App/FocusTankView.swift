@@ -96,6 +96,7 @@ struct FocusTankView: View {
     }
 
     private func handleFinnTap() {
+        guard pollutionLevel < 1.0 else { return }
         let haptic = UIImpactFeedbackGenerator(style: .medium)
         haptic.impactOccurred()
 
