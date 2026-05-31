@@ -114,10 +114,24 @@ struct TimeTankUsageReportConfiguration {
 struct TimeTankUsageReportView: View {
     let configuration: TimeTankUsageReportConfiguration
 
+    @Environment(\.colorScheme) private var colorScheme
+
     private let tideOrange = Color(red: 1.0, green: 0.42, blue: 0.169)
-    private let textDark   = Color(red: 0.11, green: 0.102, blue: 0.094)
-    private let textMuted  = Color(red: 0.522, green: 0.475, blue: 0.459)
-    private let peachFoam  = Color(red: 1.0, green: 0.91, blue: 0.839)
+    private var textDark: Color {
+        colorScheme == .dark
+            ? Color(red: 0.95, green: 0.921, blue: 0.89)
+            : Color(red: 0.11, green: 0.102, blue: 0.094)
+    }
+    private var textMuted: Color {
+        colorScheme == .dark
+            ? Color(red: 0.704, green: 0.655, blue: 0.621)
+            : Color(red: 0.522, green: 0.475, blue: 0.459)
+    }
+    private var peachFoam: Color {
+        colorScheme == .dark
+            ? Color(red: 0.31, green: 0.227, blue: 0.173)
+            : Color(red: 1.0, green: 0.91, blue: 0.839)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -191,8 +205,18 @@ struct TimeTankUsageReportView: View {
 struct TimeTankScreenTimeReportView: View {
     let configuration: TimeTankUsageReportConfiguration
 
-    private let textDark   = Color(red: 0.11, green: 0.102, blue: 0.094)
-    private let textMuted  = Color(red: 0.522, green: 0.475, blue: 0.459)
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var textDark: Color {
+        colorScheme == .dark
+            ? Color(red: 0.95, green: 0.921, blue: 0.89)
+            : Color(red: 0.11, green: 0.102, blue: 0.094)
+    }
+    private var textMuted: Color {
+        colorScheme == .dark
+            ? Color(red: 0.704, green: 0.655, blue: 0.621)
+            : Color(red: 0.522, green: 0.475, blue: 0.459)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

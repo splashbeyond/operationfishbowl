@@ -36,7 +36,7 @@ final class TimeTankModel {
     init() {
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots
-        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .system
+        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -298,7 +298,7 @@ final class TimeTankModel {
         pollutionLevel = store.pollutionLevel
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots
-        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .system
+        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection

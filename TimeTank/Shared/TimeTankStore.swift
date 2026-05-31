@@ -148,8 +148,8 @@ final class TimeTankStore {
     }
 
     var appearanceModeRawValue: String {
-        get { defaults.string(forKey: TimeTankDefaultsKey.appearanceMode) ?? TimeTankAppearanceMode.system.rawValue }
-        set { defaults.set(TimeTankAppearanceMode(rawValue: newValue)?.rawValue ?? TimeTankAppearanceMode.system.rawValue, forKey: TimeTankDefaultsKey.appearanceMode) }
+        get { defaults.string(forKey: TimeTankDefaultsKey.appearanceMode) ?? TimeTankAppearanceMode.light.rawValue }
+        set { defaults.set(TimeTankAppearanceMode(rawValue: newValue)?.rawValue ?? TimeTankAppearanceMode.light.rawValue, forKey: TimeTankDefaultsKey.appearanceMode) }
     }
 
     var selection: FamilyActivitySelection {

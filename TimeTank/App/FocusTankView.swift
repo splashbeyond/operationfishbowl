@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct FocusTankView: View {
     let pollutionLevel: Double
     var onFinnTap: (() -> Void)? = nil
@@ -26,6 +27,14 @@ struct FocusTankView: View {
                 ZStack {
                     if colorScheme == .dark {
                         tankDarkModeBackdrop(size: size)
+                    }
+
+                    // 1a. Right-side fill patch (dark mode only — covers dark spot on right inner glass)
+                    if colorScheme == .dark {
+                        Ellipse()
+                            .fill(Color(red: 0.78, green: 0.86, blue: 0.92))
+                            .frame(width: size * 0.10, height: size * 0.10)
+                            .offset(x: size * 0.12, y: size * 0.06)
                     }
 
                     // 1. Glass bowl (back)
@@ -92,6 +101,19 @@ struct FocusTankView: View {
                         .animation(.easeInOut(duration: 0.6), value: finnFaceName)
                         .animation(.spring(response: 0.25, dampingFraction: 0.4), value: finnScale)
                         .onTapGesture { handleFinnTap() }
+
+                    // 4. Foreground bubbles — subset that floats in front of Finn
+                    Canvas { ctx, canvasSize in
+                        let interior = CGRect(
+                            x: canvasSize.width  * 0.225,
+                            y: canvasSize.height * 0.30,
+                            width:  canvasSize.width  * 0.562,
+                            height: canvasSize.height * 0.47
+                        )
+                        drawForegroundBubbles(in: &ctx, rect: interior, time: time)
+                    }
+                    .frame(width: size, height: size)
+                    .allowsHitTesting(false)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }
@@ -101,34 +123,44 @@ struct FocusTankView: View {
     }
 
     private func tankDarkModeBackdrop(size: CGFloat) -> some View {
-        ZStack {
-            Ellipse()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.96),
-                            Color(red: 0.93, green: 0.96, blue: 0.98).opacity(0.86),
-                            Color(red: 0.78, green: 0.88, blue: 0.96).opacity(0.34)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+        Canvas { ctx, sz in
+            // Exact same clip path as the water fill — guaranteed to match the bowl interior
+            let interior = CGRect(
+                x: sz.width  * 0.258,
+                y: sz.height * 0.30,
+                width:  sz.width  * 0.492,
+                height: sz.height * 0.47
+            )
+            let rTop = interior.width * 0.18
+            let rBot = interior.width * 0.53
+            var clip = Path()
+            clip.move(to: CGPoint(x: interior.minX + rTop, y: interior.minY))
+            clip.addLine(to: CGPoint(x: interior.maxX - rTop, y: interior.minY))
+            clip.addQuadCurve(to: CGPoint(x: interior.maxX, y: interior.minY + rTop),
+                              control: CGPoint(x: interior.maxX, y: interior.minY))
+            clip.addLine(to: CGPoint(x: interior.maxX, y: interior.maxY - rBot))
+            clip.addQuadCurve(to: CGPoint(x: interior.midX, y: interior.maxY),
+                              control: CGPoint(x: interior.maxX, y: interior.maxY))
+            clip.addQuadCurve(to: CGPoint(x: interior.minX, y: interior.maxY - rBot),
+                              control: CGPoint(x: interior.minX, y: interior.maxY))
+            clip.addLine(to: CGPoint(x: interior.minX, y: interior.minY + rTop))
+            clip.addQuadCurve(to: CGPoint(x: interior.minX + rTop, y: interior.minY),
+                              control: CGPoint(x: interior.minX, y: interior.minY))
+            clip.closeSubpath()
+            ctx.clip(to: clip)
+            ctx.fill(
+                Path(CGRect(origin: .zero, size: sz)),
+                with: .linearGradient(
+                    Gradient(colors: [
+                        Color(red: 0.88, green: 0.93, blue: 0.97),
+                        Color(red: 0.72, green: 0.83, blue: 0.92)
+                    ]),
+                    startPoint: CGPoint(x: sz.width / 2, y: interior.minY),
+                    endPoint:   CGPoint(x: sz.width / 2, y: interior.maxY)
                 )
-                .frame(width: size * 0.66, height: size * 0.52)
-                .offset(y: size * 0.10)
-
-            Capsule()
-                .fill(Color.white.opacity(0.92))
-                .frame(width: size * 0.62, height: size * 0.075)
-                .offset(y: -size * 0.235)
-
-            Capsule()
-                .stroke(Color.white.opacity(0.50), lineWidth: max(1, size * 0.006))
-                .frame(width: size * 0.64, height: size * 0.09)
-                .offset(y: -size * 0.235)
+            )
         }
-        .compositingGroup()
-        .blur(radius: size * 0.004)
+        .frame(width: size, height: size)
     }
 
     private func handleFinnTap() {
@@ -189,19 +221,63 @@ struct FocusTankView: View {
         return path
     }
 
+    private func drawForegroundBubbles(in ctx: inout GraphicsContext, rect: CGRect, time: TimeInterval) {
+        let bubbleVis = max(0.0, 1.0 - pollutionLevel * 2.0)
+        guard bubbleVis > 0 else { return }
+        let fill         = min(0.84, 0.80 + pollutionLevel * 0.06)
+        let surfaceCycle = fill / 0.50
+
+        for i in 0..<2 {
+            let spread = Double(i) * 0.31 + 0.22
+            let phase  = Double(i) * 0.71 + 0.5
+            let cycle  = (time * 0.048 + phase).truncatingRemainder(dividingBy: 1.0)
+            let x      = rect.minX + rect.width  * CGFloat(spread)
+            let y      = rect.maxY - rect.height * CGFloat(cycle) * 0.9
+            let r      = CGFloat(1.8 + Double(i) * 1.0)
+
+            let surfaceFade: Double
+            if cycle >= surfaceCycle {
+                surfaceFade = 0.0
+            } else if cycle > surfaceCycle * 0.85 {
+                surfaceFade = (surfaceCycle - cycle) / (surfaceCycle * 0.15)
+            } else {
+                surfaceFade = 1.0
+            }
+
+            let opacity = min(cycle * 3.0, 1.0) * 0.55 * bubbleVis * surfaceFade
+            let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+            ctx.stroke(bubble, with: .color(.white.opacity(opacity)), lineWidth: 1.2)
+        }
+    }
+
     private func drawParticles(in ctx: inout GraphicsContext, rect: CGRect, time: TimeInterval) {
         // Clean bubbles — fade out completely by 50% pollution
         let bubbleVis = max(0.0, 1.0 - pollutionLevel * 2.0)
         if bubbleVis > 0 {
-            for i in 0..<6 {
-                let spread  = Double(i % 3) * 0.28 + 0.15
-                let phase   = Double(i) * 0.43
-                let cycle   = (time * 0.055 + phase).truncatingRemainder(dividingBy: 1.0)
-                let x       = rect.minX + rect.width  * CGFloat(spread)
-                let y       = rect.maxY - rect.height * CGFloat(cycle) * 0.9
-                let r       = CGFloat(2.0 + Double(i % 3) * 1.2)
+            // cycle value at which a bubble hits the water surface
+            let fill        = min(0.84, 0.80 + pollutionLevel * 0.06)
+            let surfaceCycle = fill / 0.50
+
+            for i in 0..<3 {
+                let spread = Double(i % 3) * 0.28 + 0.15
+                let phase  = Double(i) * 0.43
+                let cycle  = (time * 0.055 + phase).truncatingRemainder(dividingBy: 1.0)
+                let x      = rect.minX + rect.width  * CGFloat(spread)
+                let y      = rect.maxY - rect.height * CGFloat(cycle) * 0.50
+                let r      = CGFloat(2.0 + Double(i % 3) * 1.2)
+
+                // Fade out over the last 15% of travel before the surface, then disappear
+                let surfaceFade: Double
+                if cycle >= surfaceCycle {
+                    surfaceFade = 0.0
+                } else if cycle > surfaceCycle * 0.70 {
+                    surfaceFade = (surfaceCycle - cycle) / (surfaceCycle * 0.30)
+                } else {
+                    surfaceFade = 1.0
+                }
+
+                let opacity = min(cycle * 3.0, 1.0) * 0.60 * bubbleVis * surfaceFade
                 let bubble  = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
-                let opacity = min(cycle * 7.0, 1.0) * 0.60 * bubbleVis
                 ctx.stroke(bubble, with: .color(.white.opacity(opacity)), lineWidth: 1.2)
             }
         }
@@ -210,22 +286,29 @@ struct FocusTankView: View {
         guard pollutionLevel > 0.2 else { return }
         let debrisStrength = (pollutionLevel - 0.2) / 0.8
         let debrisCount    = Int(3 + debrisStrength * 8)
+        let fill           = min(0.84, 0.80 + pollutionLevel * 0.06)
+        let surfaceY       = rect.maxY - rect.height * CGFloat(fill) + rect.height * 0.06
+        let fadeZone       = rect.height * 0.12
 
         for i in 0..<debrisCount {
-            let seed    = Double(i)
-            let spread  = (seed * 0.137 + 0.08).truncatingRemainder(dividingBy: 0.82) + 0.08
-            let phase   = seed * 0.619
-            let speed   = 0.022 + seed.truncatingRemainder(dividingBy: 3.0) * 0.011
-            let cycle   = (time * speed + phase).truncatingRemainder(dividingBy: 1.0)
-            let wobble  = CGFloat(sin(time * 1.1 + phase) * Double(rect.width) * 0.032)
-            let x       = rect.minX + rect.width  * CGFloat(spread) + wobble
-            let y       = rect.maxY - rect.height * CGFloat(cycle)   * 0.88
-            let r       = CGFloat(1.0 + seed.truncatingRemainder(dividingBy: 4.0) * 0.85) * CGFloat(debrisStrength)
-            let opacity = min(cycle * 4.0, 1.0) * 0.50 * debrisStrength
-            // Debris shifts from warm-brown at low pollution to dark muddy at full
-            let dr = 0.62 + debrisStrength * 0.09
-            let dg = 0.38 - debrisStrength * 0.12
-            let particle = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
+            let seed   = Double(i)
+            let spread = (seed * 0.137 + 0.08).truncatingRemainder(dividingBy: 0.82) + 0.08
+            let phase  = seed * 0.619
+            let speed  = 0.022 + seed.truncatingRemainder(dividingBy: 3.0) * 0.011
+            let cycle  = (time * speed + phase).truncatingRemainder(dividingBy: 1.0)
+            let wobble = CGFloat(sin(time * 1.1 + phase) * Double(rect.width) * 0.032)
+            let x      = rect.minX + rect.width  * CGFloat(spread) + wobble
+            let y      = rect.maxY - rect.height * CGFloat(cycle)   * 0.88
+
+            guard y > surfaceY else { continue }  // hard cutoff — never above surface
+
+            let distToSurface = y - surfaceY
+            let surfaceFade   = CGFloat(min(1.0, distToSurface / fadeZone))
+            let r             = CGFloat(1.0 + seed.truncatingRemainder(dividingBy: 4.0) * 0.85) * CGFloat(debrisStrength)
+            let opacity       = Double(min(cycle * 4.0, 1.0) * 0.50 * debrisStrength) * Double(surfaceFade)
+            let dr            = 0.62 + debrisStrength * 0.09
+            let dg            = 0.38 - debrisStrength * 0.12
+            let particle      = Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
             ctx.fill(particle, with: .color(Color(red: dr, green: dg, blue: 0.08).opacity(opacity)))
         }
     }

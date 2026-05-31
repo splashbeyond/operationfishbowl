@@ -4,6 +4,7 @@ import SwiftUI
 struct StatsView: View {
     @Environment(TimeTankModel.self) private var model
     @State private var showingMonthLog = false
+    @State private var reportRefreshID = UUID()
 
     var body: some View {
         NavigationStack {
@@ -43,6 +44,7 @@ struct StatsView: View {
                             } else if model.hasSelection {
                                 DeviceActivityReport(reportContext, filter: reportFilter)
                                     .frame(minHeight: CGFloat(model.selectedItemCount) * 56 + 80)
+                                    .id(reportRefreshID)
                             } else {
                                 Text("Pick distractions first. The report uses those selected app, category, and web tokens.")
                                     .font(.timeTankBody())
@@ -64,6 +66,7 @@ struct StatsView: View {
                             } else {
                                 DeviceActivityReport(allAppsReportContext, filter: allAppsReportFilter)
                                     .frame(minHeight: 80)
+                                    .id(reportRefreshID)
                             }
                         }
                     }
@@ -72,6 +75,7 @@ struct StatsView: View {
             }
             .background(Color.warmWhite)
             .navigationTitle("Stats")
+            .onAppear { reportRefreshID = UUID() }
             .sheet(isPresented: $showingMonthLog) {
                 MonthFinnLogView(model: model)
                     .presentationDetents([.medium, .large])
