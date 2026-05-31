@@ -2,6 +2,7 @@ import DeviceActivity
 import FamilyControls
 import Foundation
 import Observation
+import UserNotifications
 
 @MainActor
 @Observable
@@ -178,6 +179,7 @@ final class TimeTankModel {
         refresh()
         #else
         do {
+            requestNotificationPermission()
             try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes)
             store.markMonitoringStarted()
             isMonitoringEnabled = true
@@ -352,7 +354,6 @@ final class TimeTankModel {
     }
 
     private func enforceExpiredBypassIfNeeded() {
-        // If bypass is still active but cooldown schedule is missing, start it now from the main app
         if store.isBypassActive(), store.isMonitoringEnabled, store.hasSelection {
             let activities = DeviceActivityCenter().activities
             if !activities.contains(TimeTankConstants.bypassActivityName) {
@@ -362,6 +363,7 @@ final class TimeTankModel {
                         let startNow = Date()
                         let windowMinutes = TimeTankRules.bypassWindowMinutes(bypassCount: store.bypassCount, budgetMinutes: store.dailyBudgetMinutes)
                         try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: startNow)
+                        scheduleBypassExpiryNotification(at: expiresAt)
                         store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
                     }
                 }
@@ -371,6 +373,29 @@ final class TimeTankModel {
         guard store.isMonitoringEnabled, store.shouldReapplyShield() else { return }
         ScreenTimeShielding.applyShield(for: store.selection)
         store.clearBypassWindow()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
         store.recordDiagnostic("Expired bypass recovered from app foreground.", source: "App")
+    }
+
+    private func scheduleBypassExpiryNotification(at date: Date) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
+
+        let content = UNMutableNotificationContent()
+        content.title = "Finn needs you back"
+        content.body = "Your bypass window is up. Open TimeTank to check on the tank."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: max(1, date.timeIntervalSinceNow),
+            repeats: false
+        )
+
+        let request = UNNotificationRequest(identifier: "bypass-expiry", content: content, trigger: trigger)
+        center.add(request)
+    }
+
+    func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 }
