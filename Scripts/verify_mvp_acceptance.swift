@@ -100,7 +100,7 @@ struct VerifyMVPAcceptance {
         try expect(
             stats.contains("weekLog") &&
             stats.contains("MonthFinnLogView") &&
-            stats.contains("FinnDayStatusView") &&
+            stats.contains("FinnDayCircle") &&
             stats.contains("TimeTankStore.dayKey"),
             "Stats must show Finn's week log and expand to the month log from saved daily snapshots."
         )
