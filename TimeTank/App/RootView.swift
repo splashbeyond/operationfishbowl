@@ -3,8 +3,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(TimeTankModel.self) private var model
-    @Environment(\.scenePhase) private var scenePhase
-    @State private var selectedTab: TimeTankTab = .tank
+    @Binding var selectedTab: TimeTankTab
 
     var body: some View {
         Group {
@@ -12,11 +11,6 @@ struct RootView: View {
                 mainTabs
             } else {
                 OnboardingView()
-            }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                model.refresh()
             }
         }
     }
