@@ -4,6 +4,7 @@ struct FocusTankView: View {
     let pollutionLevel: Double
     var onFinnTap: (() -> Void)? = nil
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var finnTapped = false
     @State private var finnScale: CGFloat = 1.0
 
@@ -23,6 +24,10 @@ struct FocusTankView: View {
                 let finnSize = size * 0.36
 
                 ZStack {
+                    if colorScheme == .dark {
+                        tankDarkModeBackdrop(size: size)
+                    }
+
                     // 1. Glass bowl (back)
                     Image("FinnBowlOnly")
                         .resizable()
@@ -93,6 +98,32 @@ struct FocusTankView: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(3)
+    }
+
+    private func tankDarkModeBackdrop(size: CGFloat) -> some View {
+        ZStack {
+            Ellipse()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color(red: 0.34, green: 0.22, blue: 0.13).opacity(0.45),
+                            Color(red: 0.20, green: 0.15, blue: 0.11).opacity(0.30),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: size * 0.06,
+                        endRadius: size * 0.44
+                    )
+                )
+                .frame(width: size * 0.86, height: size * 0.66)
+                .offset(y: size * 0.07)
+
+            Ellipse()
+                .fill(Color.cardBackground.opacity(0.28))
+                .frame(width: size * 0.72, height: size * 0.50)
+                .blur(radius: size * 0.035)
+                .offset(y: size * 0.07)
+        }
     }
 
     private func handleFinnTap() {
