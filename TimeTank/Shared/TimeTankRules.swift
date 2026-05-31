@@ -40,10 +40,11 @@ public enum TimeTankRules {
     public static func bypassWindowMinutes(bypassCount: Int, budgetMinutes: Int) -> Int {
         if budgetMinutes <= 1 { return 1 }
         switch bypassCount {
-        case 0:  return 15
-        case 1:  return 30
-        case 2:  return 45
-        default: return 60
+        case 0:  return 5   // 20% pollution — jarring reminder
+        case 1:  return 10  // 40% pollution — pushing it
+        case 2:  return 15  // 60% pollution — clearly checked out
+        case 3:  return 30  // 80% pollution — nearly failed the day
+        default: return 60  // 100% pollution — Finn is suffering, day is lost
         }
     }
 
