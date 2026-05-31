@@ -2,6 +2,10 @@ import SwiftUI
 
 struct FocusTankView: View {
     let pollutionLevel: Double
+    var onFinnTap: (() -> Void)? = nil
+
+    @State private var finnTapped = false
+    @State private var finnScale: CGFloat = 1.0
 
     var body: some View {
         TimelineView(.animation) { timeline in
@@ -72,20 +76,39 @@ struct FocusTankView: View {
                     .frame(width: size, height: size)
 
                     // 3. Finn — face swaps with crossfade at each pollution threshold
-                    Image(finnFaceName)
+                    Image(finnTapped ? "FinnMascotAlert" : finnFaceName)
                         .resizable()
                         .scaledToFit()
                         .frame(width: finnSize)
                         .scaleEffect(x: facingRight ? 1 : -1, y: 1)
+                        .scaleEffect(finnScale)
                         .offset(x: sway, y: size * 0.05 + bob)
                         .opacity(1.0 - pollutionLevel * 0.28)
                         .animation(.easeInOut(duration: 0.6), value: finnFaceName)
+                        .animation(.spring(response: 0.25, dampingFraction: 0.4), value: finnScale)
+                        .onTapGesture { handleFinnTap() }
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(3)
+    }
+
+    private func handleFinnTap() {
+        let haptic = UIImpactFeedbackGenerator(style: .medium)
+        haptic.impactOccurred()
+
+        withAnimation { finnScale = 1.18 }
+        finnTapped = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation { finnScale = 1.0 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            finnTapped = false
+            onFinnTap?()
+        }
     }
 
     // Face asset name keyed to pollution threshold

@@ -1,3 +1,4 @@
+import ManagedSettings
 import SwiftUI
 
 struct TankDashboardView: View {
@@ -9,9 +10,16 @@ struct TankDashboardView: View {
                 VStack(spacing: 10) {
                     header
 
-                    FocusTankView(pollutionLevel: model.pollutionLevel)
-                        .frame(height: 360)
-                        .padding(.bottom, -70)
+                    FocusTankView(pollutionLevel: model.pollutionLevel) {
+                        // Tap on Finn reapplies shield if budget was exceeded
+                        guard model.isBudgetExceededToday else { return }
+                        model.refresh()
+                        if model.isMonitoringEnabled && model.hasSelection {
+                            ScreenTimeShielding.applyShield(for: model.selection)
+                        }
+                    }
+                    .frame(height: 360)
+                    .padding(.bottom, -70)
 
                     pollutionDisplay
 
