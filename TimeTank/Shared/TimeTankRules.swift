@@ -34,6 +34,19 @@ public enum TimeTankRules {
         return clampedPollution(basePollution + bypassPenalty)
     }
 
+    // Escalating bypass windows: longer grace period each time, but tank fills up.
+    // 1-min budget = test mode, always 1-min windows.
+    // Production: 15 → 30 → 45 → 60 min based on how many bypasses were actually used.
+    public static func bypassWindowMinutes(bypassCount: Int, budgetMinutes: Int) -> Int {
+        if budgetMinutes <= 1 { return 1 }
+        switch bypassCount {
+        case 0:  return 15
+        case 1:  return 30
+        case 2:  return 45
+        default: return 60
+        }
+    }
+
     public static func usageProgress(usedMinutes: Int, budgetMinutes: Int) -> Double {
         guard budgetMinutes > 0 else { return spentUsageProgress }
         return max(0, Double(usedMinutes) / Double(budgetMinutes))

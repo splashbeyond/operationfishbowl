@@ -24,12 +24,12 @@ enum ScreenTimeScheduler {
         )
     }
 
-    static func startBypassCooldown(selection: FamilyActivitySelection, now: Date = Date()) throws {
+    static func startBypassCooldown(selection: FamilyActivitySelection, windowMinutes: Int, now: Date = Date()) throws {
         // Stop any existing bypass monitoring so repeated bypasses always get a fresh schedule
         DeviceActivityCenter().stopMonitoring([TimeTankConstants.bypassActivityName])
 
         let calendar = Calendar.current
-        let intendedEnd = calendar.date(byAdding: .minute, value: TimeTankConstants.bypassWindowMinutes, to: now) ?? now
+        let intendedEnd = calendar.date(byAdding: .minute, value: windowMinutes, to: now) ?? now
         let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? intendedEnd
         let end = min(intendedEnd, endOfDay)
         let startComponents = calendar.dateComponents([.hour, .minute, .second], from: now)

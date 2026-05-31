@@ -360,7 +360,8 @@ final class TimeTankModel {
                     let remaining = expiresAt.timeIntervalSinceNow
                     if remaining > 0 {
                         let startNow = Date()
-                        try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, now: startNow)
+                        let windowMinutes = TimeTankRules.bypassWindowMinutes(bypassCount: store.bypassCount, budgetMinutes: store.dailyBudgetMinutes)
+                        try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: startNow)
                         store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
                     }
                 }
