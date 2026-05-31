@@ -4,6 +4,11 @@ import Foundation
 
 enum ScreenTimeScheduler {
     static func startDailyMonitoring(selection: FamilyActivitySelection, budgetMinutes: Int) throws {
+        let center = DeviceActivityCenter()
+        // Always stop first — re-calling startMonitoring on an active name is a no-op on some OS
+        // versions and an error on others; stopping guarantees a clean slate with the new threshold.
+        center.stopMonitoring([TimeTankConstants.dailyActivityName])
+
         let schedule = DeviceActivitySchedule(
             intervalStart: DateComponents(hour: 0, minute: 0),
             intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
@@ -17,7 +22,7 @@ enum ScreenTimeScheduler {
             threshold: DateComponents(minute: max(1, budgetMinutes))
         )
 
-        try DeviceActivityCenter().startMonitoring(
+        try center.startMonitoring(
             TimeTankConstants.dailyActivityName,
             during: schedule,
             events: [TimeTankConstants.budgetEventName: event]

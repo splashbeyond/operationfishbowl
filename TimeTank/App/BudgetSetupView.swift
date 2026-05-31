@@ -168,9 +168,16 @@ struct BudgetSetupView: View {
                 HStack(spacing: 10) {
                     Image(systemName: model.isMonitoringEnabled ? "checkmark.shield.fill" : "shield")
                         .foregroundStyle(model.isMonitoringEnabled ? Color.tankTeal : Color.textMuted)
-                    Text(model.isMonitoringEnabled ? "Finn is watching the tank." : "Finn isn't watching yet.")
-                        .font(.timeTankBody(16))
-                        .foregroundStyle(Color.textDark)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.isMonitoringEnabled ? "Finn is watching the tank." : "Finn isn't watching yet.")
+                            .font(.timeTankBody(16))
+                            .foregroundStyle(Color.textDark)
+                        if model.isMonitoringEnabled {
+                            Text("Shield activates when your budget runs out.")
+                                .font(.timeTankBody(13))
+                                .foregroundStyle(Color.textMuted)
+                        }
+                    }
                 }
 
                 if let error = model.scheduleError {
@@ -183,13 +190,10 @@ struct BudgetSetupView: View {
                     PrimaryButton(title: "Allow Screen Time", systemImage: "person.badge.shield.checkmark") {
                         Task { await model.requestAuthorization() }
                     }
-                }
-
-                PrimaryButton(
-                    title: model.isMonitoringEnabled ? "Restart Monitoring" : "Start Monitoring",
-                    systemImage: "water.waves"
-                ) {
-                    model.startMonitoring()
+                } else if !model.isMonitoringEnabled {
+                    PrimaryButton(title: "Start Monitoring", systemImage: "water.waves") {
+                        model.startMonitoring()
+                    }
                 }
             }
         }

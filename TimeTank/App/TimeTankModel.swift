@@ -157,6 +157,13 @@ final class TimeTankModel {
         statusMessage = "Got it. \(Self.durationLabel(for: dailyBudgetMinutes)). Finn's counting on you."
         store.recordDiagnostic("Budget saved: \(dailyBudgetMinutes) minute(s).", source: "App")
         refresh()
+        // Re-register the DeviceActivity schedule with the new threshold immediately.
+        // Without this the system keeps enforcing the old budget until next app launch.
+        #if !targetEnvironment(simulator)
+        if isAuthorized && hasEffectiveSelection {
+            startMonitoring()
+        }
+        #endif
     }
 
     func saveAppearanceMode(_ mode: TimeTankAppearanceMode) {
