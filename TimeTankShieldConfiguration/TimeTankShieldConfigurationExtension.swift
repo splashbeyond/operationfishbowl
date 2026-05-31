@@ -28,12 +28,12 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
 
         let subtitle: String
         let imageName: String
-        if pollution >= 0.8 {
+        if pollution >= 1.0 {
             imageName = "FinnMascotSuffering"
             subtitle  = "Finn can barely breathe. Please stop."
-        } else if pollution >= 0.4 {
+        } else if pollution >= 0.8 {
             imageName = "FinnMascotDistressed"
-            subtitle  = "The tank is getting bad. Finn needs a break."
+            subtitle  = "The tank is getting really bad. Finn needs a break."
         } else {
             imageName = "FinnMascotWorried"
             subtitle  = "Opening this will make the tank murkier."

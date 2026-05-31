@@ -91,11 +91,11 @@ struct FocusTankView: View {
     // Face asset name keyed to pollution threshold
     private var finnFaceName: String {
         switch pollutionLevel {
-        case 0..<0.2:  return "FinnMascot"           // Blissful — clean tank
-        case 0.2..<0.4: return "FinnMascotAlert"     // Alert — first bypass
-        case 0.4..<0.6: return "FinnMascotWorried"   // Worried — two bypasses
-        case 0.6..<1.0: return "FinnMascotDistressed" // Distressed — 3–4 bypasses
-        default:        return "FinnMascotSuffering"  // Suffering — max pollution
+        case 0..<0.2:   return "FinnMascot"            // Blissful — clean tank
+        case 0.2..<0.4: return "FinnMascotAlert"      // Alert
+        case 0.4..<0.8: return "FinnMascotWorried"    // Worried — 40–80%
+        case 0.8..<1.0: return "FinnMascotDistressed" // Distressed — 80–100%
+        default:        return "FinnMascotSuffering"  // Suffering — 100%
         }
     }
 

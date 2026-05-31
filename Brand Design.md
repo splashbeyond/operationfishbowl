@@ -319,6 +319,16 @@ Finn in his bowl:
 ![[ChatGPT Image May 28, 2026, 09_55_29 PM.png]]
 IOS Icon:
 ![[TimeTank IOS Icon.png]]
+New IOS Icon:
+![[TimeTank IOS Icon New.png]]
+
+Finn in Bowl Happy:
+![[ChatGPT Image May 30, 2026, 05_41_51 PM.png]]
+
+
+Finn Happy:
+![[ChatGPT Image May 30, 2026, 05_37_32 PM.png]]
+
 
 
 Finn Alert:
@@ -327,7 +337,9 @@ Finn Alert:
 
 
 Finn Worried:
-![[ChatGPT Image May 30, 2026, 12_16_17 PM.png]]
+
+![[d2c36401-b4e8-49d6-ac42-371004657d17.png]]
+
 Finn Distressed:
 ![[ChatGPT Image May 30, 2026, 12_22_35 PM.png
 
