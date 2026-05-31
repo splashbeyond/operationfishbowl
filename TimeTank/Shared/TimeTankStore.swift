@@ -38,17 +38,7 @@ final class TimeTankStore {
             return stored > 0 ? stored : TimeTankConstants.defaultBudgetMinutes
         }
         set {
-            defaults.set(max(1, newValue), forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
-        }
-    }
-
-    var bypassLimitMinutes: Int {
-        get {
-            let stored = defaults.integer(forKey: TimeTankDefaultsKey.bypassLimitMinutes)
-            return stored > 0 ? stored : TimeTankConstants.defaultBypassLimitMinutes
-        }
-        set {
-            defaults.set(TimeTankRules.normalizedBypassLimitMinutes(newValue), forKey: TimeTankDefaultsKey.bypassLimitMinutes)
+            defaults.set(Self.normalizedBudgetMinutes(newValue), forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
         }
     }
 
@@ -328,6 +318,10 @@ final class TimeTankStore {
 
     private static func clampPollution(_ value: Double) -> Double {
         TimeTankRules.clampedPollution(value)
+    }
+
+    private static func normalizedBudgetMinutes(_ value: Int) -> Int {
+        min(TimeTankConstants.maximumBudgetMinutes, max(1, value))
     }
 
     static func dayKey(for date: Date, calendar: Calendar) -> String {

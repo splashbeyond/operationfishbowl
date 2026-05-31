@@ -7,6 +7,8 @@ struct BudgetSetupView: View {
     @State private var isPickerPresented = false
     @State private var budgetMinutes = TimeTankConstants.defaultBudgetMinutes
 
+    private let budgetPresets = [15, 30, 60, 120, 240, 480, 720]
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -58,17 +60,17 @@ struct BudgetSetupView: View {
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color.textMuted)
 
-                            Text("\(budgetMinutes) min")
+                            Text(TimeTankModel.durationLabel(for: budgetMinutes))
                                 .font(.timeTankMetric(52))
                                 .foregroundStyle(Color.textDark)
                                 .contentTransition(.numericText())
 
-                            HStack(spacing: 8) {
-                                ForEach([15, 30, 60, 120], id: \.self) { preset in
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                                ForEach(budgetPresets, id: \.self) { preset in
                                     Button {
                                         budgetMinutes = preset
                                     } label: {
-                                        Text(preset == 60 ? "1 hr" : preset == 120 ? "2 hr" : "\(preset)m")
+                                        Text(presetLabel(for: preset))
                                             .font(.system(size: 13, weight: .bold, design: .rounded))
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 9)
@@ -80,7 +82,7 @@ struct BudgetSetupView: View {
                                 }
                             }
 
-                            Stepper(value: $budgetMinutes, in: 5...240, step: 5) {
+                            Stepper(value: $budgetMinutes, in: 5...TimeTankConstants.maximumBudgetMinutes, step: 5) {
                                 Text("How long is fair for these apps?")
                                     .font(.timeTankBody())
                                     .foregroundStyle(Color.textDark)
@@ -89,7 +91,7 @@ struct BudgetSetupView: View {
                             Slider(value: Binding(
                                 get: { Double(budgetMinutes) },
                                 set: { budgetMinutes = Int(($0 / 5).rounded()) * 5 }
-                            ), in: 5...240, step: 5)
+                            ), in: 5...Double(TimeTankConstants.maximumBudgetMinutes), step: 5)
                             .tint(.tideOrange)
 
                             PrimaryButton(title: "Save Budget", systemImage: "checkmark") {
@@ -153,5 +155,10 @@ struct BudgetSetupView: View {
             return "Demo distraction saved for Simulator."
         }
         return "\(count) selection\(count == 1 ? "" : "s") saved for Finn's tank."
+    }
+
+    private func presetLabel(for minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes)m" }
+        return "\(minutes / 60)h"
     }
 }

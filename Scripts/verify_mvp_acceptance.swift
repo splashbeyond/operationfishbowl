@@ -81,7 +81,7 @@ struct VerifyMVPAcceptance {
             shieldAction.contains("store.markShieldAction()") &&
             shieldAction.contains("store.incrementPollution()") &&
             shieldAction.contains("startBypassCooldown") &&
-            shieldAction.contains("maximumBypassMinutes: store.bypassLimitMinutes") &&
+            !shieldAction.contains("maximumBypassMinutes") &&
             !shieldAction.contains("UNNotificationRequest"),
             "Shield action must log action, increment murkiness, start bypass cooldown, and not schedule timer-only notifications."
         )
@@ -97,9 +97,8 @@ struct VerifyMVPAcceptance {
             settings.contains("Active schedules") &&
             settings.contains("APPEARANCE") &&
             settings.contains("TimeTankAppearanceMode.allCases") &&
-            settings.contains("BYPASS CAP") &&
-            settings.contains("[15, 30, 60, 120, 240, 480, 720]"),
-            "Settings diagnostics must expose threshold, schedule, shield-action evidence, appearance, and the user bypass cap."
+            !settings.contains("BYPASS CAP"),
+            "Settings diagnostics must expose threshold, schedule, shield-action evidence, and appearance without a bypass-cap control."
         )
         try expect(
             app.contains("preferredColorScheme(model.appearanceMode.preferredColorScheme)") &&
@@ -133,9 +132,10 @@ struct VerifyMVPAcceptance {
             "Bypass DeviceActivity event must detect selected-app usage evidence, not drive timer-only notifications."
         )
         try expect(
-            budget.contains("[15, 30, 60, 120]") &&
+            budget.contains("[15, 30, 60, 120, 240, 480, 720]") &&
+            budget.contains("TimeTankConstants.maximumBudgetMinutes") &&
             budget.contains("How long is fair for these apps?"),
-            "Budget setup must prioritize simple selected-app budget presets."
+            "Budget setup must let users choose selected-app budgets up to twelve hours."
         )
         try expect(
             project.contains("TimeTankReport.appex in Embed App Extensions") &&

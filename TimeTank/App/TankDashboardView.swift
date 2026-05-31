@@ -98,7 +98,7 @@ struct TankDashboardView: View {
                     HStack {
                         Label("\(model.selectedItemCount) selected", systemImage: "square.grid.2x2")
                         Spacer()
-                        Text("\(model.dailyBudgetMinutes) min")
+                        Text(TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
                     }
                     .font(.timeTankBody(14))

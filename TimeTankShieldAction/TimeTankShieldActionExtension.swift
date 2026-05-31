@@ -31,8 +31,7 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
             // Calculate window BEFORE incrementing so all three use the same value
             let windowMinutes = TimeTankRules.bypassWindowMinutes(
                 bypassCount: store.bypassCount,
-                budgetMinutes: store.dailyBudgetMinutes,
-                maximumBypassMinutes: store.bypassLimitMinutes
+                budgetMinutes: store.dailyBudgetMinutes
             )
             store.bypassCount += 1
             store.incrementPollution()
