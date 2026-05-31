@@ -41,23 +41,44 @@ struct TimeTankSmallWidgetView: View {
     let entry: TimeTankWidgetEntry
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Finn fills the widget
-            Image(finnFaceName)
-                .resizable()
-                .scaledToFit()
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 32)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                // Explicit background (same cream as medium)
+                Color(red: 1.0, green: 0.98, blue: 0.96)
 
-            // Murkiness % pinned to bottom
-            Text(percentLabel)
-                .font(.system(size: 15, weight: .heavy, design: .rounded))
-                .foregroundColor(labelColor)
-                .padding(.bottom, 10)
+                // Water rising from bottom — height grows with pollution
+                VStack(spacing: 0) {
+                    Spacer()
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [waterColor.opacity(0.22), waterColor.opacity(0.55)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(height: geo.size.height * (0.08 + entry.pollutionLevel * 0.55))
+                }
+
+                // Finn — sized relative to widget, pushed up to leave room for label
+                Image(finnFaceName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(
+                        width: geo.size.width * 0.68,
+                        height: geo.size.height * 0.70
+                    )
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 24)
+
+                // Status label pinned to bottom
+                Text(percentLabel)
+                    .font(.system(size: 13, weight: .heavy, design: .rounded))
+                    .foregroundColor(labelColor)
+                    .padding(.bottom, 10)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var finnFaceName: String {
@@ -67,6 +88,17 @@ struct TimeTankSmallWidgetView: View {
         case 0.4..<0.8: return "FinnMascotWorried"
         case 0.8..<1.0: return "FinnMascotSuffering"
         default:        return "FinnMascotDistressed"
+        }
+    }
+
+    private var waterColor: Color {
+        let p = entry.pollutionLevel
+        if p < 0.5 {
+            let t = p / 0.5
+            return Color(red: t * 1.0, green: 0.75 - t * 0.08, blue: 0.65 - t * 0.40)
+        } else {
+            let t = (p - 0.5) / 0.5
+            return Color(red: 1.0 - t * 0.29, green: 0.67 - t * 0.27, blue: 0.25 - t * 0.14)
         }
     }
 

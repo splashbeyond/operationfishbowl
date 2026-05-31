@@ -94,14 +94,6 @@ final class TimeTankModel {
         TimeTankRules.statusMessage(for: murkinessState, budgetMinutes: dailyBudgetMinutes)
     }
 
-    var isRunningInSimulator: Bool {
-        #if targetEnvironment(simulator)
-        true
-        #else
-        false
-        #endif
-    }
-
     func requestAuthorization() async {
         #if targetEnvironment(simulator)
         isAuthorized = true
@@ -245,73 +237,6 @@ final class TimeTankModel {
         refresh()
     }
 
-    func startOneMinuteDeviceTest() {
-        guard isAuthorized else {
-            scheduleError = "Approve Screen Time access before starting the device test."
-            store.recordDiagnostic("One-minute test blocked: missing authorization.", source: "App")
-            refresh()
-            return
-        }
-
-        guard hasSelection else {
-            scheduleError = "Pick at least one real app before starting the device test."
-            store.recordDiagnostic("One-minute test blocked: no real selection.", source: "App")
-            refresh()
-            return
-        }
-
-        #if targetEnvironment(simulator)
-        statusMessage = "Use Simulator demo mode here. The one-minute test needs an iPhone."
-        store.recordDiagnostic("One-minute test skipped in Simulator.", source: "App")
-        refresh()
-        #else
-        do {
-            try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: 1)
-            dailyBudgetMinutes = 1
-            store.dailyBudgetMinutes = 1
-            store.markMonitoringStarted()
-            store.isBudgetExceededToday = false
-            store.clearBypassWindow()
-            isMonitoringEnabled = true
-            scheduleError = nil
-            statusMessage = "One-minute device test is running. Open a selected app for over a minute."
-            store.recordDiagnostic("One-minute device test started.", source: "App")
-        } catch {
-            store.isMonitoringEnabled = false
-            store.lastScheduleError = error.localizedDescription
-            isMonitoringEnabled = false
-            scheduleError = error.localizedDescription
-            statusMessage = "Device test could not start."
-            store.recordDiagnostic("One-minute device test failed: \(error.localizedDescription)", source: "App")
-        }
-        refresh()
-        #endif
-    }
-
-    func applyShieldNowForDeviceTest() {
-        guard hasSelection else {
-            scheduleError = "Pick at least one real app before applying a test shield."
-            store.recordDiagnostic("Manual shield blocked: no real selection.", source: "App")
-            refresh()
-            return
-        }
-
-        ScreenTimeShielding.applyShield(for: selection)
-        store.markBudgetExceeded()
-        statusMessage = "Manual shield applied. Open a selected app to verify the block."
-        store.recordDiagnostic("Manual shield applied from Settings.", source: "App")
-        refresh()
-    }
-
-    func clearShieldForDeviceTest() {
-        ScreenTimeShielding.clearShield()
-        store.clearBypassWindow()
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
-        statusMessage = "Manual shield cleared."
-        store.recordDiagnostic("Manual shield cleared from Settings.", source: "App")
-        refresh()
-    }
-
     func refresh() {
         enforceExpiredBypassIfNeeded()
         autoRestartMonitoringIfNeeded()
@@ -355,21 +280,6 @@ final class TimeTankModel {
         store.clearDiagnostics()
         refresh()
     }
-
-    #if DEBUG
-    func debugAddPollution() {
-        store.isBudgetExceededToday = true
-        store.incrementBypassCount()
-        refresh()
-        statusMessage = "The water just got murkier."
-    }
-
-    func debugAwardCurrent() {
-        store.currentsBalance += 1
-        refresh()
-        statusMessage = "Clean day. Finn's happy. +1 Current earned."
-    }
-    #endif
 
     // Start monitoring for the first time if all conditions are met and it hasn't started yet
     private func autoStartIfReady() {
