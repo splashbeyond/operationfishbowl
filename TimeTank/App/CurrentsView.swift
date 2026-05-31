@@ -18,7 +18,8 @@ struct CurrentsView: View {
                                 .accessibilityLabel("Finn the TimeTank mascot")
 
                             Text("CURRENTS")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -30,7 +31,7 @@ struct CurrentsView: View {
                                     .foregroundStyle(Color.textMuted)
                             }
 
-                            Text("Clean days earn Currents at midnight. Finn earned these.")
+                            Text("Every clean day earns a Current at midnight. Keep the water clean, keep earning.")
                                 .font(.timeTankBody())
                                 .foregroundStyle(Color.textDark)
                         }
@@ -38,10 +39,10 @@ struct CurrentsView: View {
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 10) {
-                            Label("Marketplace comes after the shield loop is solid.", systemImage: "lock.fill")
+                            Label("Rewards are coming.", systemImage: "lock.fill")
                                 .font(.timeTankHeading(17))
                                 .foregroundStyle(Color.textDark)
-                            Text("The MVP tracks the balance now so tank rewards can plug in cleanly later.")
+                            Text("Currents will unlock tank decorations and real perks. Keep the water clean to earn more.")
                                 .font(.timeTankBody(15))
                                 .foregroundStyle(Color.textMuted)
                         }

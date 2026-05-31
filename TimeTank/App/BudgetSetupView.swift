@@ -13,31 +13,15 @@ struct BudgetSetupView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
-                    if model.isRunningInSimulator {
-                        TimeTankCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Label("Simulator Demo Mode", systemImage: "iphone.gen3")
-                                    .font(.timeTankHeading(18))
-                                    .foregroundStyle(Color.textDark)
-
-                                Text("Apple's real Screen Time permissions, picker tokens, and shields require a signed physical iPhone. Use a demo selection here to exercise the MVP flow in Simulator.")
-                                    .font(.timeTankBody(14))
-                                    .foregroundStyle(Color.textMuted)
-
-                                PrimaryButton(title: "Use Demo Selection", systemImage: "sparkles") {
-                                    model.enableSimulatorDemoSelection()
-                                }
-                            }
-                        }
-                    }
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("PICK APPS")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Text("YOUR APPS")
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
-                            Text("Choose the apps that eat your time.")
+                            Text("Pick the apps that eat your time.")
                                 .font(.timeTankHeading())
                                 .foregroundStyle(Color.textDark)
 
@@ -49,15 +33,14 @@ struct BudgetSetupView: View {
                                 pickerSelection = model.selection
                                 isPickerPresented = true
                             }
-                            .opacity(model.isRunningInSimulator ? 0.55 : 1)
-                            .disabled(model.isRunningInSimulator)
                         }
                     }
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("TODAY'S BUDGET")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Text("DAILY BUDGET")
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
                             Text(TimeTankModel.durationLabel(for: budgetMinutes))
@@ -83,7 +66,7 @@ struct BudgetSetupView: View {
                             }
 
                             Stepper(value: $budgetMinutes, in: 5...TimeTankConstants.maximumBudgetMinutes, step: 5) {
-                                Text("How long is fair for these apps?")
+                                Text("How long is fair?")
                                     .font(.timeTankBody())
                                     .foregroundStyle(Color.textDark)
                             }
@@ -101,10 +84,19 @@ struct BudgetSetupView: View {
                     }
 
                     TimeTankCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Label(model.isMonitoringEnabled ? "Monitoring is on" : "Monitoring is off", systemImage: model.isMonitoringEnabled ? "checkmark.shield.fill" : "shield")
-                                .font(.timeTankHeading(18))
-                                .foregroundStyle(model.isMonitoringEnabled ? Color.tankTeal : Color.textDark)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("STATUS")
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
+                                .foregroundStyle(Color.textMuted)
+
+                            HStack(spacing: 10) {
+                                Image(systemName: model.isMonitoringEnabled ? "checkmark.shield.fill" : "shield")
+                                    .foregroundStyle(model.isMonitoringEnabled ? Color.tankTeal : Color.textMuted)
+                                Text(model.isMonitoringEnabled ? "Finn is watching the tank." : "Finn isn't watching yet.")
+                                    .font(.timeTankBody(16))
+                                    .foregroundStyle(Color.textDark)
+                            }
 
                             if let error = model.scheduleError {
                                 Text(error)
@@ -118,7 +110,10 @@ struct BudgetSetupView: View {
                                 }
                             }
 
-                            PrimaryButton(title: model.isMonitoringEnabled ? "Restart Monitoring" : "Start Monitoring", systemImage: "water.waves") {
+                            PrimaryButton(
+                                title: model.isMonitoringEnabled ? "Restart Monitoring" : "Start Monitoring",
+                                systemImage: "water.waves"
+                            ) {
                                 model.startMonitoring()
                             }
                         }
@@ -148,13 +143,8 @@ struct BudgetSetupView: View {
 
     private var selectionSummary: String {
         let count = model.selectedItemCount
-        if count == 0 {
-            return "No distractions selected yet."
-        }
-        if model.isSimulatorDemoSelectionEnabled && !model.hasSelection {
-            return "Demo distraction saved for Simulator."
-        }
-        return "\(count) selection\(count == 1 ? "" : "s") saved for Finn's tank."
+        if count == 0 { return "No apps picked yet." }
+        return "\(count) app\(count == 1 ? "" : "s") saved. Finn is watching."
     }
 
     private func presetLabel(for minutes: Int) -> String {

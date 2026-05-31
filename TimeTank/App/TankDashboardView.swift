@@ -11,7 +11,6 @@ struct TankDashboardView: View {
                     header
 
                     FocusTankView(pollutionLevel: model.pollutionLevel) {
-                        // Tap on Finn reapplies shield if budget was exceeded
                         guard model.isBudgetExceededToday else { return }
                         model.refresh()
                         if model.isMonitoringEnabled && model.hasSelection {
@@ -43,7 +42,7 @@ struct TankDashboardView: View {
                         }
                     }
 
-                    distractionBudgetCard
+                    budgetCard
                 }
                 .padding(20)
             }
@@ -83,20 +82,21 @@ struct TankDashboardView: View {
         .padding(.top, -12)
     }
 
-    private var distractionBudgetCard: some View {
+    private var budgetCard: some View {
         TimeTankCard {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Distraction Budget")
-                    .font(.timeTankHeading(17))
-                    .foregroundStyle(Color.textDark)
+                Text("YOUR BUDGET")
+                    .font(.timeTankLabel())
+                    .tracking(1.2)
+                    .foregroundStyle(Color.textMuted)
 
                 if !model.hasEffectiveSelection {
-                    Text("Pick distractions first. TimeTank only judges the apps you choose.")
+                    Text("Pick your apps first. Finn only watches what you choose.")
                         .font(.timeTankBody(14))
                         .foregroundStyle(Color.textMuted)
                 } else {
                     HStack {
-                        Label("\(model.selectedItemCount) selected", systemImage: "square.grid.2x2")
+                        Label("\(model.selectedItemCount) app\(model.selectedItemCount == 1 ? "" : "s")", systemImage: "square.grid.2x2")
                         Spacer()
                         Text(TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
@@ -104,7 +104,7 @@ struct TankDashboardView: View {
                     .font(.timeTankBody(14))
                     .foregroundStyle(Color.textDark)
 
-                    Text(model.isMonitoringEnabled ? "Monitoring is on. Reports live in Stats." : "Start TimeTank to protect this budget.")
+                    Text(model.isMonitoringEnabled ? "Finn is watching the tank." : "Start TimeTank to protect your time.")
                         .font(.timeTankBody(14))
                         .foregroundStyle(Color.textMuted)
                 }
@@ -117,7 +117,6 @@ struct TankDashboardView: View {
         if model.pollutionLevel >= 0.8 { return .amber }
         return .tankTeal
     }
-
 }
 
 struct BudgetProgressBar: View {

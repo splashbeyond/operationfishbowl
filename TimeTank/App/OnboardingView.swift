@@ -33,15 +33,18 @@ struct OnboardingView: View {
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            onboardingRow(icon: "square.grid.2x2", title: "Pick distractions", copy: "Utilities stay out of the tank.")
+                            onboardingRow(icon: "square.grid.2x2", title: "Pick your apps", copy: "Only track apps that eat your time.")
                             onboardingRow(icon: "clock", title: "Set a daily budget", copy: "Use your time when it makes sense.")
-                            onboardingRow(icon: "water.waves", title: "Protect the water", copy: "Bypassing makes the tank murkier.")
+                            onboardingRow(icon: "water.waves", title: "Keep the water clean", copy: "The more you go over, the murkier it gets.")
                         }
                     }
                     .padding(.horizontal, 20)
 
                     VStack(spacing: 12) {
-                        PrimaryButton(title: model.isAuthorized ? "Start Setup" : "Allow Screen Time", systemImage: "person.badge.shield.checkmark") {
+                        PrimaryButton(
+                            title: model.isAuthorized ? "Set Up Finn" : "Allow Screen Time",
+                            systemImage: "person.badge.shield.checkmark"
+                        ) {
                             if model.isAuthorized {
                                 model.completeOnboarding()
                             } else {
@@ -69,14 +72,6 @@ struct OnboardingView: View {
                         Text(error)
                             .font(.timeTankBody(13))
                             .foregroundStyle(Color.muddyBrown)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 28)
-                    }
-
-                    if model.isRunningInSimulator {
-                        Text("Simulator uses demo Screen Time mode. Real permissions and shields must be tested on a signed iPhone.")
-                            .font(.timeTankBody(13))
-                            .foregroundStyle(Color.textMuted)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 28)
                     }

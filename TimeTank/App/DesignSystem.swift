@@ -65,6 +65,11 @@ extension Font {
     static func timeTankMetric(_ size: CGFloat = 48) -> Font {
         .system(size: size, weight: .bold, design: .monospaced)
     }
+
+    // All-caps section labels — always pair with .tracking(1.2)
+    static func timeTankLabel(_ size: CGFloat = 11) -> Font {
+        .system(size: size, weight: .semibold, design: .rounded)
+    }
 }
 
 struct TimeTankCard<Content: View>: View {

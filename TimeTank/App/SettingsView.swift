@@ -7,40 +7,12 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
-                    TimeTankCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("SCREEN TIME")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Color.textMuted)
-
-                            statusRow(title: "Authorization", value: model.isRunningInSimulator ? "Simulator demo" : model.isAuthorized ? "Ready" : "Needs access")
-                            statusRow(title: "Selected items", value: "\(model.selectedItemCount)")
-                            statusRow(title: "Budget", value: TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
-                            statusRow(title: "Budget state", value: model.isBudgetExceededToday ? "Spent today" : "Available")
-                            statusRow(title: "Murkiness", value: model.murkinessState.rawValue.capitalized)
-                            statusRow(title: "Bypass", value: bypassStatus)
-                            statusRow(title: "Active schedules", value: model.activeActivitySummary)
-                            statusRow(title: "Monitoring started", value: formatted(model.lastMonitoringStartDate))
-                            statusRow(title: "Threshold reached", value: formatted(model.lastThresholdDate))
-                            statusRow(title: "Last shield apply", value: formatted(model.lastShieldApplyDate))
-                            statusRow(title: "Last shield clear", value: formatted(model.lastShieldClearDate))
-                            statusRow(title: "Last shield action", value: formatted(model.lastShieldActionDate))
-                            statusRow(title: "App Group", value: TimeTankConstants.appGroupIdentifier)
-                        }
-                    }
-
-                    if let authorizationError = model.authorizationError {
-                        TimeTankCard {
-                            Text(authorizationError)
-                                .font(.timeTankBody(14))
-                                .foregroundStyle(Color.muddyBrown)
-                        }
-                    }
 
                     TimeTankCard {
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 14) {
                             Text("APPEARANCE")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
                             Picker("Appearance", selection: Binding(
@@ -56,123 +28,74 @@ struct SettingsView: View {
                     }
 
                     TimeTankCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Text("DIAGNOSTICS")
-                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(Color.textMuted)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("MONITORING")
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
+                                .foregroundStyle(Color.textMuted)
 
-                                Spacer()
-
-                                Button {
-                                    model.clearDiagnostics()
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(Color.textMuted)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Clear diagnostics")
+                            HStack(spacing: 10) {
+                                Image(systemName: model.isMonitoringEnabled ? "checkmark.shield.fill" : "shield")
+                                    .foregroundStyle(model.isMonitoringEnabled ? Color.tankTeal : Color.textMuted)
+                                Text(model.isMonitoringEnabled ? "Finn is watching the tank." : "Monitoring is paused.")
+                                    .font(.timeTankBody(16))
+                                    .foregroundStyle(Color.textDark)
                             }
 
-                            if model.diagnostics.isEmpty {
-                                Text("No Screen Time events recorded yet.")
-                                    .font(.timeTankBody(14))
-                                    .foregroundStyle(Color.textMuted)
+                            if model.isMonitoringEnabled {
+                                Button {
+                                    model.stopMonitoring()
+                                } label: {
+                                    Label("Pause Monitoring", systemImage: "pause.fill")
+                                        .font(.timeTankButton())
+                                        .foregroundStyle(Color.tideOrange)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color.cardBackground)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .stroke(Color.tideOrange, lineWidth: 1.5)
+                                        }
+                                }
+                                .buttonStyle(.plain)
                             } else {
-                                ForEach(model.diagnostics) { event in
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text("\(event.source) · \(event.timestamp.formatted(date: .omitted, time: .shortened))")
-                                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(Color.textMuted)
-                                        Text(event.message)
-                                            .font(.timeTankBody(14))
-                                            .foregroundStyle(Color.textDark)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                PrimaryButton(title: "Start Monitoring", systemImage: "water.waves") {
+                                    model.startMonitoring()
                                 }
                             }
                         }
-                    }
-
-                    PrimaryButton(title: "Request Authorization", systemImage: "person.badge.shield.checkmark") {
-                        Task { await model.requestAuthorization() }
                     }
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("DEVICE VERIFICATION")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Text("ABOUT")
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
-                            Text("For real-device testing: pick one obvious app, start the one-minute test, use that app for over a minute, then check diagnostics for a threshold callback and shield apply event.")
+                            HStack {
+                                Text("TimeTank")
+                                    .font(.timeTankBody(15))
+                                    .foregroundStyle(Color.textDark)
+                                Spacer()
+                                Text(appVersion)
+                                    .font(.timeTankBody(15))
+                                    .foregroundStyle(Color.textMuted)
+                            }
+
+                            Text("Keep the water clean.")
                                 .font(.timeTankBody(14))
-                                .foregroundStyle(Color.textDark)
-
-                            Button {
-                                model.startOneMinuteDeviceTest()
-                            } label: {
-                                Label("Start 1-Minute Test", systemImage: "timer")
-                                    .font(.timeTankButton())
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.tideOrange)
-
-                            Button {
-                                model.applyShieldNowForDeviceTest()
-                            } label: {
-                                Label("Apply Shield Now", systemImage: "shield.lefthalf.filled")
-                                    .font(.timeTankButton())
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.tideOrange)
-
-                            Button {
-                                model.clearShieldForDeviceTest()
-                            } label: {
-                                Label("Clear Shield", systemImage: "shield.slash")
-                                    .font(.timeTankButton())
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.coral)
+                                .foregroundStyle(Color.textMuted)
                         }
-                    }
-
-                    Button {
-                        model.stopMonitoring()
-                    } label: {
-                        Label("Pause Monitoring", systemImage: "pause.fill")
-                            .font(.timeTankButton())
-                            .foregroundStyle(Color.tideOrange)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.cardBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .stroke(Color.tideOrange, lineWidth: 1.5)
-                            }
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(role: .destructive) {
-                        model.resetProgress()
-                    } label: {
-                        Label("Reset Tank Progress", systemImage: "arrow.counterclockwise")
-                            .font(.timeTankButton())
-                            .foregroundStyle(Color.coral)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
                     }
 
                     #if DEBUG
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("DEBUG")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
                             Button("Add pollution") {
@@ -197,32 +120,9 @@ struct SettingsView: View {
         }
     }
 
-    private func statusRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.timeTankBody(15))
-                .foregroundStyle(Color.textMuted)
-            Spacer()
-            Text(value)
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundStyle(Color.textDark)
-                .multilineTextAlignment(.trailing)
-        }
-    }
-
-    private var bypassStatus: String {
-        guard let bypassExpiresAt = model.bypassExpiresAt else { return "Inactive" }
-
-        let seconds = max(0, Int(bypassExpiresAt.timeIntervalSinceNow))
-        if seconds == 0 { return "Expired" }
-
-        let minutes = max(1, Int(ceil(Double(seconds) / 60)))
-        return "\(minutes) min left"
-    }
-
-    private func formatted(_ date: Date?) -> String {
-        guard let date else { return "Never" }
-        return date.formatted(date: .omitted, time: .shortened)
+    private var appVersion: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        return "Version \(v)"
     }
 }
 
@@ -253,7 +153,8 @@ struct TankPreviewCard: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text("TANK PREVIEW")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .font(.timeTankLabel())
+                        .tracking(1.2)
                         .foregroundStyle(Color.textMuted)
                     Spacer()
                     Text(faceName)

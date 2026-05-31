@@ -5,6 +5,8 @@ struct StatsView: View {
     @Environment(TimeTankModel.self) private var model
     @State private var showingMonthLog = false
     @State private var reportRefreshID = UUID()
+    @State private var lastRefreshDate: Date = .distantPast
+    @State private var isLoadingReport = false
 
     var body: some View {
         NavigationStack {
@@ -15,7 +17,8 @@ struct StatsView: View {
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("TODAY")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
                             HStack(alignment: .firstTextBaseline) {
@@ -34,19 +37,16 @@ struct StatsView: View {
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("DISTRACTION APPS")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
-                            if model.isRunningInSimulator {
-                                Text("Real app usage, pickups, notifications, and first pickup only render on a signed iPhone with Screen Time authorization.")
-                                    .font(.timeTankBody())
-                                    .foregroundStyle(Color.textDark)
-                            } else if model.hasSelection {
+                            if model.hasSelection {
                                 DeviceActivityReport(reportContext, filter: reportFilter)
-                                    .frame(minHeight: CGFloat(model.selectedItemCount) * 56 + 80)
                                     .id(reportRefreshID)
+                                    .frame(minHeight: max(120, CGFloat(model.selectedItemCount) * 56 + 80))
                             } else {
-                                Text("Pick distractions first. The report uses those selected app, category, and web tokens.")
+                                Text("Pick your apps first.")
                                     .font(.timeTankBody())
                                     .foregroundStyle(Color.textDark)
                             }
@@ -56,18 +56,18 @@ struct StatsView: View {
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("YOUR SCREEN TIME")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.timeTankLabel())
+                                .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
-                            if model.isRunningInSimulator {
-                                Text("Total iPhone usage across all apps renders on a signed device with Screen Time authorization.")
-                                    .font(.timeTankBody())
-                                    .foregroundStyle(Color.textDark)
-                            } else {
+                            ZStack {
                                 DeviceActivityReport(allAppsReportContext, filter: allAppsReportFilter)
-                                    .frame(minHeight: 80)
                                     .id(reportRefreshID)
+                                if isLoadingReport {
+                                    reportPlaceholder
+                                }
                             }
+                            .frame(minHeight: 90)
                         }
                     }
                 }
@@ -75,7 +75,7 @@ struct StatsView: View {
             }
             .background(Color.warmWhite)
             .navigationTitle("Stats")
-            .onAppear { reportRefreshID = UUID() }
+            .onAppear { refreshReportIfNeeded() }
             .sheet(isPresented: $showingMonthLog) {
                 MonthFinnLogView(model: model)
                     .presentationDetents([.medium, .large])
@@ -83,11 +83,35 @@ struct StatsView: View {
         }
     }
 
+    private var reportPlaceholder: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .tint(Color.textMuted)
+            Text("Loading…")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.textMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    }
+
+    private func refreshReportIfNeeded() {
+        let staleness: TimeInterval = 120
+        guard Date().timeIntervalSince(lastRefreshDate) > staleness else { return }
+        lastRefreshDate = Date()
+        reportRefreshID = UUID()
+        isLoadingReport = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            isLoadingReport = false
+        }
+    }
+
     private var weekLog: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("WEEK")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                Text("THIS WEEK")
+                    .font(.timeTankLabel())
+                    .tracking(1.2)
                     .foregroundStyle(Color.textMuted)
                 Spacer()
                 Button {
