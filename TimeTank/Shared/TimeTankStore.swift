@@ -178,9 +178,8 @@ final class TimeTankStore {
     }
 
     @discardableResult
-    func startBypassWindow(now: Date = Date()) -> Date {
-        let minutes = TimeTankRules.bypassWindowMinutes(bypassCount: bypassCount, budgetMinutes: dailyBudgetMinutes)
-        let expiresAt = Calendar.current.date(byAdding: .minute, value: minutes, to: now) ?? now
+    func startBypassWindow(windowMinutes: Int, now: Date = Date()) -> Date {
+        let expiresAt = Calendar.current.date(byAdding: .minute, value: windowMinutes, to: now) ?? now
         bypassExpiresAt = expiresAt
         lastBypassDate = now
         return expiresAt
