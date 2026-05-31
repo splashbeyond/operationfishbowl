@@ -104,26 +104,31 @@ struct FocusTankView: View {
         ZStack {
             Ellipse()
                 .fill(
-                    RadialGradient(
+                    LinearGradient(
                         colors: [
-                            Color(red: 0.34, green: 0.22, blue: 0.13).opacity(0.45),
-                            Color(red: 0.20, green: 0.15, blue: 0.11).opacity(0.30),
-                            Color.clear
+                            Color.white.opacity(0.96),
+                            Color(red: 0.93, green: 0.96, blue: 0.98).opacity(0.86),
+                            Color(red: 0.78, green: 0.88, blue: 0.96).opacity(0.34)
                         ],
-                        center: .center,
-                        startRadius: size * 0.06,
-                        endRadius: size * 0.44
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
-                .frame(width: size * 0.86, height: size * 0.66)
-                .offset(y: size * 0.07)
+                .frame(width: size * 0.66, height: size * 0.52)
+                .offset(y: size * 0.10)
 
-            Ellipse()
-                .fill(Color.cardBackground.opacity(0.28))
-                .frame(width: size * 0.72, height: size * 0.50)
-                .blur(radius: size * 0.035)
-                .offset(y: size * 0.07)
+            Capsule()
+                .fill(Color.white.opacity(0.92))
+                .frame(width: size * 0.62, height: size * 0.075)
+                .offset(y: -size * 0.235)
+
+            Capsule()
+                .stroke(Color.white.opacity(0.50), lineWidth: max(1, size * 0.006))
+                .frame(width: size * 0.64, height: size * 0.09)
+                .offset(y: -size * 0.235)
         }
+        .compositingGroup()
+        .blur(radius: size * 0.004)
     }
 
     private func handleFinnTap() {
