@@ -27,10 +27,13 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
 
         case .secondaryButtonPressed:
             store.markShieldAction()
-            // Don't count the bypass yet — only increment if the user actually uses
-            // the app during the window (handled in TimeTankMonitorExtension.eventDidReachThreshold)
-            store.startBypassWindow(now: Date())
+            let bypassStart = Date()
+            store.startBypassWindow(now: bypassStart)
             ScreenTimeShielding.clearShield()
+            // Attempt to schedule the bypass cooldown directly from the extension.
+            // If this fails (extensions are unreliable), the main app's scene-active
+            // observer will reschedule it on next foreground.
+            try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, now: bypassStart)
             store.recordDiagnostic("Secondary shield button tapped; bypass window started.", source: "ShieldAction")
             completionHandler(.close)
 
