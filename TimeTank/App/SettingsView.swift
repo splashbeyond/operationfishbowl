@@ -40,6 +40,24 @@ struct SettingsView: View {
 
                     TimeTankCard {
                         VStack(alignment: .leading, spacing: 12) {
+                            Text("APPEARANCE")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color.textMuted)
+
+                            Picker("Appearance", selection: Binding(
+                                get: { model.appearanceMode },
+                                set: { model.saveAppearanceMode($0) }
+                            )) {
+                                ForEach(TimeTankAppearanceMode.allCases) { mode in
+                                    Text(mode.label).tag(mode)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                    }
+
+                    TimeTankCard {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("BYPASS CAP")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color.textMuted)
@@ -151,7 +169,7 @@ struct SettingsView: View {
                             .foregroundStyle(Color.tideOrange)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white)
+                            .background(Color.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)

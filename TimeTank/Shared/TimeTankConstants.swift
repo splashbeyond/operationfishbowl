@@ -20,6 +20,22 @@ enum TimeTankConstants {
     static let pollutionIncrement = TimeTankRules.bypassPollutionIncrement
 }
 
+enum TimeTankAppearanceMode: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light:  return "Light"
+        case .dark:   return "Dark"
+        }
+    }
+}
+
 enum TimeTankDefaultsKey {
     static let selectionData = "selectedDistractionApps"
     static let dailyBudgetMinutes = "dailyBudgetMinutes"
@@ -43,4 +59,5 @@ enum TimeTankDefaultsKey {
     static let budgetedAppUsedDuringBypass = "budgetedAppUsedDuringBypass"
     static let bypassLimitMinutes = "bypassLimitMinutes"
     static let dailySnapshots = "dailySnapshots"
+    static let appearanceMode = "appearanceMode"
 }

@@ -27,6 +27,7 @@ final class TimeTankModel {
     var bypassCount: Int
     var bypassLimitMinutes: Int
     var dailySnapshots: [TimeTankDailySnapshot]
+    var appearanceMode: TimeTankAppearanceMode
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -37,6 +38,7 @@ final class TimeTankModel {
         bypassCount = store.bypassCount
         bypassLimitMinutes = store.bypassLimitMinutes
         dailySnapshots = store.dailySnapshots
+        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .system
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -160,6 +162,12 @@ final class TimeTankModel {
         statusMessage = "Bypass cap set to \(Self.durationLabel(for: bypassLimitMinutes))."
         store.recordDiagnostic("Bypass cap saved: \(bypassLimitMinutes) minute(s).", source: "App")
         refresh()
+    }
+
+    func saveAppearanceMode(_ mode: TimeTankAppearanceMode) {
+        appearanceMode = mode
+        store.appearanceModeRawValue = mode.rawValue
+        statusMessage = "Appearance set to \(mode.label)."
     }
 
     func startMonitoring() {
@@ -301,6 +309,7 @@ final class TimeTankModel {
         bypassCount = store.bypassCount
         bypassLimitMinutes = store.bypassLimitMinutes
         dailySnapshots = store.dailySnapshots
+        appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .system
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection

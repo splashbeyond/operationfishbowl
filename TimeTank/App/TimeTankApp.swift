@@ -13,7 +13,7 @@ struct TimeTankApp: App {
         WindowGroup {
             RootView(selectedTab: $selectedTab)
                 .environment(model)
-                .preferredColorScheme(.light)
+                .preferredColorScheme(model.appearanceMode.preferredColorScheme)
                 .onReceive(NotificationCenter.default.publisher(for: .openTankTab)) { _ in
                     selectedTab = .tank
                     model.refresh()

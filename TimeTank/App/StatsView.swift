@@ -231,11 +231,11 @@ private struct FinnDayCircle: View {
     }
 
     private var backgroundColor: Color {
-        guard let pollutionLevel else { return Color.white.opacity(0.55) }
+        guard let pollutionLevel else { return Color.cardBackground.opacity(0.55) }
         if pollutionLevel >= 0.8 { return Color.muddyBrown.opacity(0.15) }
         if pollutionLevel >= 0.4 { return Color.amber.opacity(0.16) }
         if pollutionLevel > 0 { return Color.tankTeal.opacity(0.14) }
-        return Color.white
+        return Color.cardBackground
     }
 
     private var ringColor: Color {

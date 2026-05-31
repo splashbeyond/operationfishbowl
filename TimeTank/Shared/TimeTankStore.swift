@@ -157,6 +157,11 @@ final class TimeTankStore {
         }
     }
 
+    var appearanceModeRawValue: String {
+        get { defaults.string(forKey: TimeTankDefaultsKey.appearanceMode) ?? TimeTankAppearanceMode.system.rawValue }
+        set { defaults.set(TimeTankAppearanceMode(rawValue: newValue)?.rawValue ?? TimeTankAppearanceMode.system.rawValue, forKey: TimeTankDefaultsKey.appearanceMode) }
+    }
+
     var selection: FamilyActivitySelection {
         get {
             guard let data = defaults.data(forKey: TimeTankDefaultsKey.selectionData),

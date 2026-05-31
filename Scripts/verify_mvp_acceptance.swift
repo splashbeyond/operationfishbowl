@@ -24,6 +24,8 @@ struct VerifyMVPAcceptance {
         let report = try read("TimeTankReport/TimeTankReportExtension.swift")
         let shieldAction = try read("TimeTankShieldAction/TimeTankShieldActionExtension.swift")
         let settings = try read("TimeTank/App/SettingsView.swift")
+        let app = try read("TimeTank/App/TimeTankApp.swift")
+        let designSystem = try read("TimeTank/App/DesignSystem.swift")
         let scheduler = try read("TimeTank/Shared/ScreenTimeScheduler.swift")
         let budget = try read("TimeTank/App/BudgetSetupView.swift")
         let project = try read("TimeTank.xcodeproj/project.pbxproj")
@@ -93,9 +95,17 @@ struct VerifyMVPAcceptance {
             settings.contains("Last shield action") &&
             settings.contains("Threshold reached") &&
             settings.contains("Active schedules") &&
+            settings.contains("APPEARANCE") &&
+            settings.contains("TimeTankAppearanceMode.allCases") &&
             settings.contains("BYPASS CAP") &&
             settings.contains("[15, 30, 60, 120, 240, 480, 720]"),
-            "Settings diagnostics must expose threshold, schedule, shield-action evidence, and the user bypass cap."
+            "Settings diagnostics must expose threshold, schedule, shield-action evidence, appearance, and the user bypass cap."
+        )
+        try expect(
+            app.contains("preferredColorScheme(model.appearanceMode.preferredColorScheme)") &&
+            designSystem.contains("cardBackground") &&
+            store.contains("appearanceModeRawValue"),
+            "Appearance mode must be persisted, applied at the app root, and backed by adaptive colors."
         )
         try expect(
             stats.contains("weekLog") &&
