@@ -147,6 +147,16 @@ final class TimeTankStore {
         }
     }
 
+    var lastBudgetSaveDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.lastBudgetSaveDate) as? Date }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastBudgetSaveDate) }
+    }
+
+    var isBudgetLockedForToday: Bool {
+        guard let saved = lastBudgetSaveDate else { return false }
+        return Calendar.current.isDateInToday(saved)
+    }
+
     var appearanceModeRawValue: String {
         get { defaults.string(forKey: TimeTankDefaultsKey.appearanceMode) ?? TimeTankAppearanceMode.light.rawValue }
         set { defaults.set(TimeTankAppearanceMode(rawValue: newValue)?.rawValue ?? TimeTankAppearanceMode.light.rawValue, forKey: TimeTankDefaultsKey.appearanceMode) }

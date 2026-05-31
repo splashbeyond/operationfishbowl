@@ -59,4 +59,5 @@ enum TimeTankDefaultsKey {
     static let budgetedAppUsedDuringBypass = "budgetedAppUsedDuringBypass"
     static let dailySnapshots = "dailySnapshots"
     static let appearanceMode = "appearanceMode"
+    static let lastBudgetSaveDate = "lastBudgetSaveDate"
 }

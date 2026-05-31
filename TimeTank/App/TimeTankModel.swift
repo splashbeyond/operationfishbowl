@@ -27,6 +27,7 @@ final class TimeTankModel {
     var bypassCount: Int
     var dailySnapshots: [TimeTankDailySnapshot]
     var appearanceMode: TimeTankAppearanceMode
+    var isBudgetLockedForToday: Bool
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -37,6 +38,7 @@ final class TimeTankModel {
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots
         appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
+        isBudgetLockedForToday = store.isBudgetLockedForToday
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -149,6 +151,7 @@ final class TimeTankModel {
     func saveBudget(minutes: Int) {
         dailyBudgetMinutes = min(TimeTankConstants.maximumBudgetMinutes, max(1, minutes))
         store.dailyBudgetMinutes = dailyBudgetMinutes
+        store.lastBudgetSaveDate = Date()
         statusMessage = "Got it. \(Self.durationLabel(for: dailyBudgetMinutes)). Finn's counting on you."
         store.recordDiagnostic("Budget saved: \(dailyBudgetMinutes) minute(s).", source: "App")
         refresh()
@@ -299,6 +302,7 @@ final class TimeTankModel {
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots
         appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
+        isBudgetLockedForToday = store.isBudgetLockedForToday
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection
