@@ -139,7 +139,13 @@ final class TimeTankModel {
         statusMessage = hasSelection ? "Selection saved. Finn has a reason to care." : "Pick something. Finn needs a reason to care."
         store.recordDiagnostic("Selection saved with \(selectedItemCount) item(s).", source: "App")
         refresh()
-        autoStartIfReady()
+        // Always restart with the new selection — autoStartIfReady guards on !isMonitoringEnabled
+        // which would skip the restart if monitoring was already running with old tokens.
+        #if !targetEnvironment(simulator)
+        if isAuthorized && hasEffectiveSelection {
+            startMonitoring()
+        }
+        #endif
     }
 
     func enableSimulatorDemoSelection() {
@@ -200,19 +206,26 @@ final class TimeTankModel {
         #else
         do {
             requestNotificationPermission()
+            let appCount  = selection.applicationTokens.count
+            let catCount  = selection.categoryTokens.count
+            let webCount  = selection.webDomainTokens.count
+            store.recordDiagnostic("Starting monitoring: \(appCount) app(s), \(catCount) cat(s), \(webCount) web(s), budget \(dailyBudgetMinutes)m.", source: "App")
+            guard appCount + catCount + webCount > 0 else {
+                throw NSError(domain: "TimeTank", code: 1, userInfo: [NSLocalizedDescriptionKey: "Selection has no tokens — pick at least one app."])
+            }
             try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes)
             store.markMonitoringStarted()
             isMonitoringEnabled = true
             scheduleError = nil
             statusMessage = "TimeTank is watching the water."
-            store.recordDiagnostic("Daily monitoring started for \(dailyBudgetMinutes) minute budget.", source: "App")
+            store.recordDiagnostic("Monitoring registered OK — \(appCount) app token(s) active.", source: "App")
         } catch {
             store.isMonitoringEnabled = false
             store.lastScheduleError = error.localizedDescription
             isMonitoringEnabled = false
             scheduleError = error.localizedDescription
             statusMessage = "Monitoring could not start yet."
-            store.recordDiagnostic("Daily monitoring failed: \(error.localizedDescription)", source: "App")
+            store.recordDiagnostic("Monitoring failed: \(error.localizedDescription)", source: "App")
         }
         refresh()
         #endif

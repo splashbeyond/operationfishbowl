@@ -41,6 +41,7 @@ struct BudgetSetupView: View {
                 if !presented { model.saveSelection(pickerSelection) }
             }
             .onAppear {
+                model.refresh()
                 pickerSelection = model.selection
                 budgetMinutes = model.dailyBudgetMinutes
                 saveState = model.isBudgetLockedForToday ? .locked

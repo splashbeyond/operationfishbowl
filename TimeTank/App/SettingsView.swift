@@ -1,3 +1,4 @@
+import ManagedSettings
 import SwiftUI
 
 struct SettingsView: View {
@@ -98,15 +99,76 @@ struct SettingsView: View {
                                 .tracking(1.2)
                                 .foregroundStyle(Color.textMuted)
 
-                            Button("Add pollution") {
-                                model.debugAddPollution()
+                            // Monitoring state
+                            statusRow(title: "Monitoring flag", value: model.isMonitoringEnabled ? "ON" : "OFF")
+                            statusRow(title: "Active schedules", value: model.activeActivitySummary)
+                            statusRow(title: "Budget", value: TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
+                            statusRow(title: "Selected items", value: "\(model.selectedItemCount)")
+                            statusRow(title: "Authorized", value: model.isAuthorized ? "Yes" : "No")
+                            statusRow(title: "Budget exceeded", value: model.isBudgetExceededToday ? "Yes" : "No")
+                            statusRow(title: "Pollution", value: "\(Int(model.pollutionLevel * 100))%")
+
+                            Divider()
+
+                            Button("Force Apply Shield") {
+                                if model.hasSelection {
+                                    ScreenTimeShielding.applyShield(for: model.selection)
+                                    model.refresh()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.tideOrange)
+
+                            Button("Clear Shield") {
+                                ScreenTimeShielding.clearShield()
+                                model.refresh()
                             }
                             .buttonStyle(.bordered)
 
-                            Button("Award Current") {
-                                model.debugAwardCurrent()
+                            Button("Add pollution") { model.debugAddPollution() }
+                                .buttonStyle(.bordered)
+
+                            Button("Award Current") { model.debugAwardCurrent() }
+                                .buttonStyle(.bordered)
+                        }
+                    }
+
+                    // Diagnostics
+                    TimeTankCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("DIAGNOSTICS")
+                                    .font(.timeTankLabel())
+                                    .tracking(1.2)
+                                    .foregroundStyle(Color.textMuted)
+                                Spacer()
+                                Button {
+                                    model.clearDiagnostics()
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(Color.textMuted)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.bordered)
+
+                            if model.diagnostics.isEmpty {
+                                Text("No events yet.")
+                                    .font(.timeTankBody(13))
+                                    .foregroundStyle(Color.textMuted)
+                            } else {
+                                ForEach(model.diagnostics) { event in
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(event.source) · \(event.timestamp.formatted(date: .omitted, time: .shortened))")
+                                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(Color.textMuted)
+                                        Text(event.message)
+                                            .font(.timeTankBody(13))
+                                            .foregroundStyle(Color.textDark)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
                         }
                     }
 
@@ -117,6 +179,19 @@ struct SettingsView: View {
             }
             .background(Color.warmWhite)
             .navigationTitle("Settings")
+        }
+    }
+
+    private func statusRow(title: String, value: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.timeTankBody(13))
+                .foregroundStyle(Color.textMuted)
+            Spacer()
+            Text(value)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.textDark)
+                .multilineTextAlignment(.trailing)
         }
     }
 
