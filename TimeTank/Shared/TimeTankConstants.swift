@@ -13,6 +13,7 @@ enum TimeTankConstants {
     static let bypassUsageEventName = DeviceActivityEvent.Name("TimeTank.event.bypassUsageDetected")
     static let reportContextIdentifier = "TimeTank.usage.summary"
     static let allAppsReportContextIdentifier = "TimeTank.usage.all"
+    static let budgetTrackerContextIdentifier = "TimeTank.usage.budgetTracker"
 
     static let defaultBudgetMinutes = 45
     static let maximumBudgetMinutes = 720
@@ -60,5 +61,6 @@ enum TimeTankDefaultsKey {
     static let dailySnapshots = "dailySnapshots"
     static let appearanceMode = "appearanceMode"
     static let lastBudgetSaveDate = "lastBudgetSaveDate"
+    static let budgetTrackingStartDate = "budgetTrackingStartDate"
     static let selectionDataBackup = "selectedDistractionAppsBackup"
 }

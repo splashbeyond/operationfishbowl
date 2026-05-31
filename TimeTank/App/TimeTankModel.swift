@@ -20,6 +20,7 @@ final class TimeTankModel {
     var isSimulatorDemoSelectionEnabled: Bool
     var activeActivitySummary: String
     var lastMonitoringStartDate: Date?
+    var budgetTrackingStartDate: Date?
     var lastThresholdDate: Date?
     var lastShieldApplyDate: Date?
     var lastShieldClearDate: Date?
@@ -52,6 +53,7 @@ final class TimeTankModel {
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
         lastMonitoringStartDate = store.lastMonitoringStartDate
+        budgetTrackingStartDate = store.budgetTrackingStartDate
         lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate
@@ -188,6 +190,7 @@ final class TimeTankModel {
         }
 
         #if targetEnvironment(simulator)
+        store.markMonitoringStarted()
         store.isMonitoringEnabled = true
         store.lastScheduleError = nil
         isMonitoringEnabled = true
@@ -262,6 +265,7 @@ final class TimeTankModel {
         isSimulatorDemoSelectionEnabled = store.simulatorDemoSelectionEnabled
         activeActivitySummary = ScreenTimeScheduler.activeActivitySummary
         lastMonitoringStartDate = store.lastMonitoringStartDate
+        budgetTrackingStartDate = store.budgetTrackingStartDate
         lastThresholdDate = store.lastThresholdDate
         lastShieldApplyDate = store.lastShieldApplyDate
         lastShieldClearDate = store.lastShieldClearDate

@@ -1,5 +1,8 @@
 import FamilyControls
 import Foundation
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
 
 struct TimeTankDiagnosticEvent: Identifiable {
     let timestamp: Date
@@ -39,6 +42,7 @@ final class TimeTankStore {
         }
         set {
             defaults.set(Self.normalizedBudgetMinutes(newValue), forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
+            reloadWidgets()
         }
     }
 
@@ -48,17 +52,24 @@ final class TimeTankStore {
         }
         set {
             defaults.set(Self.clampPollution(newValue), forKey: TimeTankDefaultsKey.pollutionLevel)
+            reloadWidgets()
         }
     }
 
     var currentsBalance: Int {
         get { defaults.integer(forKey: TimeTankDefaultsKey.currentsBalance) }
-        set { defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.currentsBalance) }
+        set {
+            defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.currentsBalance)
+            reloadWidgets()
+        }
     }
 
     var isMonitoringEnabled: Bool {
         get { defaults.bool(forKey: TimeTankDefaultsKey.isMonitoringEnabled) }
-        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.isMonitoringEnabled) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.isMonitoringEnabled)
+            reloadWidgets()
+        }
     }
 
     var lastScheduleError: String? {
@@ -73,12 +84,18 @@ final class TimeTankStore {
 
     var bypassExpiresAt: Date? {
         get { defaults.object(forKey: TimeTankDefaultsKey.bypassExpiresAt) as? Date }
-        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.bypassExpiresAt) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.bypassExpiresAt)
+            reloadWidgets()
+        }
     }
 
     var isBudgetExceededToday: Bool {
         get { defaults.bool(forKey: TimeTankDefaultsKey.isBudgetExceededToday) }
-        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.isBudgetExceededToday) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.isBudgetExceededToday)
+            reloadWidgets()
+        }
     }
 
     var hasSeenOnboarding: Bool {
@@ -94,6 +111,14 @@ final class TimeTankStore {
     var lastMonitoringStartDate: Date? {
         get { defaults.object(forKey: TimeTankDefaultsKey.lastMonitoringStartDate) as? Date }
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastMonitoringStartDate) }
+    }
+
+    var budgetTrackingStartDate: Date? {
+        get { defaults.object(forKey: TimeTankDefaultsKey.budgetTrackingStartDate) as? Date }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.budgetTrackingStartDate)
+            reloadWidgets()
+        }
     }
 
     var lastThresholdDate: Date? {
@@ -118,7 +143,10 @@ final class TimeTankStore {
 
     var bypassCount: Int {
         get { defaults.integer(forKey: TimeTankDefaultsKey.bypassCount) }
-        set { defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.bypassCount) }
+        set {
+            defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.bypassCount)
+            reloadWidgets()
+        }
     }
 
     var budgetedAppUsedDuringBypass: Bool {
@@ -149,7 +177,10 @@ final class TimeTankStore {
 
     var lastBudgetSaveDate: Date? {
         get { defaults.object(forKey: TimeTankDefaultsKey.lastBudgetSaveDate) as? Date }
-        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.lastBudgetSaveDate) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.lastBudgetSaveDate)
+            reloadWidgets()
+        }
     }
 
     var isBudgetLockedForToday: Bool {
@@ -222,6 +253,7 @@ final class TimeTankStore {
     func markMonitoringStarted(now: Date = Date()) {
         isMonitoringEnabled = true
         lastMonitoringStartDate = now
+        budgetTrackingStartDate = now
         lastScheduleError = nil
     }
 
@@ -322,6 +354,7 @@ final class TimeTankStore {
         bypassExpiresAt = nil
         isBudgetExceededToday = false
         lastScheduleError = nil
+        budgetTrackingStartDate = nil
         lastThresholdDate = nil
         lastShieldActionDate = nil
         bypassCount = 0
@@ -339,6 +372,13 @@ final class TimeTankStore {
 
     func clearDiagnostics() {
         defaults.removeObject(forKey: TimeTankDefaultsKey.diagnostics)
+    }
+
+    private func reloadWidgets() {
+        defaults.synchronize()
+        #if canImport(WidgetKit)
+        WidgetCenter.shared.reloadTimelines(ofKind: "TimeTankWidget")
+        #endif
     }
 
     private static func clampPollution(_ value: Double) -> Double {

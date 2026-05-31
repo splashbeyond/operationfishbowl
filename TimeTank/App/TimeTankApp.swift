@@ -7,6 +7,7 @@ import UserNotifications
 struct TimeTankApp: App {
     @State private var model = TimeTankModel()
     @State private var selectedTab: TimeTankTab = .tank
+    @State private var didRegisterBudgetObserver = false
     @Environment(\.scenePhase) private var scenePhase
 
     @UIApplicationDelegateAdaptor private var delegate: AppDelegate
@@ -20,14 +21,16 @@ struct TimeTankApp: App {
                     selectedTab = .tank
                     model.refresh()
                 }
+                .onAppear {
+                    guard !didRegisterBudgetObserver else { return }
+                    didRegisterBudgetObserver = true
+                    registerDarwinBudgetObserver()
+                }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 model.refresh()
             }
-        }
-        .onAppear {
-            registerDarwinBudgetObserver()
         }
     }
 }
