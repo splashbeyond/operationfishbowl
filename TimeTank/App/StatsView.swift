@@ -103,7 +103,8 @@ struct StatsView: View {
                         date: date,
                         pollutionLevel: pollutionLevel(for: date),
                         isToday: Calendar.current.isDateInToday(date),
-                        size: 40
+                        size: 56,
+                        showsCircle: false
                     )
                     .frame(maxWidth: .infinity)
                 }
@@ -169,31 +170,46 @@ private struct FinnDayCircle: View {
     let pollutionLevel: Double?
     let isToday: Bool
     let size: CGFloat
+    var showsCircle = true
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
+            finnImage
+                .frame(width: size, height: size)
+
+            Text(dayLabel)
+                .font(.system(size: size < 38 ? 9 : 10, weight: .bold, design: .rounded))
+                .foregroundStyle(isToday ? Color.tideOrange : Color.textMuted)
+        }
+    }
+
+    @ViewBuilder
+    private var finnImage: some View {
+        if showsCircle {
             ZStack {
                 Circle()
                     .fill(backgroundColor)
                 Circle()
                     .stroke(isToday ? Color.tideOrange : ringColor, lineWidth: isToday ? 2 : 1)
 
-                if let pollutionLevel {
-                    Image(faceName(for: pollutionLevel))
-                        .resizable()
-                        .scaledToFit()
-                        .padding(size * 0.06)
-                } else {
-                    Image(systemName: "minus")
-                        .font(.system(size: size * 0.26, weight: .semibold))
-                        .foregroundStyle(Color.textMuted.opacity(0.55))
-                }
+                stateImage
+                    .padding(size * 0.06)
             }
-            .frame(width: size, height: size)
+        } else {
+            stateImage
+        }
+    }
 
-            Text(dayLabel)
-                .font(.system(size: size < 38 ? 9 : 10, weight: .bold, design: .rounded))
-                .foregroundStyle(isToday ? Color.tideOrange : Color.textMuted)
+    @ViewBuilder
+    private var stateImage: some View {
+        if let pollutionLevel {
+            Image(faceName(for: pollutionLevel))
+                .resizable()
+                .scaledToFit()
+        } else {
+            Image(systemName: "minus")
+                .font(.system(size: size * 0.26, weight: .semibold))
+                .foregroundStyle(Color.textMuted.opacity(0.55))
         }
     }
 
