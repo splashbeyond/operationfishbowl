@@ -382,8 +382,9 @@ final class TimeTankModel {
         center.removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
 
         let content = UNMutableNotificationContent()
-        content.title = "Finn needs you back"
-        content.body = "Your bypass window is up. Open TimeTank to check on the tank."
+        let (title, body) = finnNotificationCopy(for: store.pollutionLevel)
+        content.title = title
+        content.body = body
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(
@@ -393,6 +394,36 @@ final class TimeTankModel {
 
         let request = UNNotificationRequest(identifier: "bypass-expiry", content: content, trigger: trigger)
         center.add(request)
+    }
+
+    private func finnNotificationCopy(for pollution: Double) -> (String, String) {
+        switch pollution {
+        case 0..<0.2:
+            return (
+                "Check in on Finn!",
+                "He noticed you're spending time on this app. He wants to see you."
+            )
+        case 0.2..<0.4:
+            return (
+                "Finn misses you.",
+                "The tank is getting a little murky. Come check on him."
+            )
+        case 0.4..<0.6:
+            return (
+                "Finn is worried.",
+                "The water's clouding up and he's waiting for you."
+            )
+        case 0.6..<0.8:
+            return (
+                "Finn really needs you.",
+                "The tank is getting bad. He can't hold on much longer."
+            )
+        default:
+            return (
+                "Finn is suffering.",
+                "The water is almost gone. Please come back to him."
+            )
+        }
     }
 
     func requestNotificationPermission() {
