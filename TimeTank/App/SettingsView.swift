@@ -16,6 +16,7 @@ struct SettingsView: View {
                             statusRow(title: "Authorization", value: model.isRunningInSimulator ? "Simulator demo" : model.isAuthorized ? "Ready" : "Needs access")
                             statusRow(title: "Selected items", value: "\(model.selectedItemCount)")
                             statusRow(title: "Budget", value: "\(model.dailyBudgetMinutes) min")
+                            statusRow(title: "Bypass cap", value: TimeTankModel.durationLabel(for: model.bypassLimitMinutes))
                             statusRow(title: "Budget state", value: model.isBudgetExceededToday ? "Spent today" : "Available")
                             statusRow(title: "Murkiness", value: model.murkinessState.rawValue.capitalized)
                             statusRow(title: "Bypass", value: bypassStatus)
@@ -34,6 +35,25 @@ struct SettingsView: View {
                             Text(authorizationError)
                                 .font(.timeTankBody(14))
                                 .foregroundStyle(Color.muddyBrown)
+                        }
+                    }
+
+                    TimeTankCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("BYPASS CAP")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Color.textMuted)
+
+                            Picker("Bypass cap", selection: Binding(
+                                get: { model.bypassLimitMinutes },
+                                set: { model.saveBypassLimit(minutes: $0) }
+                            )) {
+                                ForEach([15, 30, 60, 120, 240, 480, 720], id: \.self) { minutes in
+                                    Text(TimeTankModel.durationLabel(for: minutes)).tag(minutes)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .tint(.tideOrange)
                         }
                     }
 

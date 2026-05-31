@@ -15,6 +15,7 @@ enum TimeTankConstants {
     static let allAppsReportContextIdentifier = "TimeTank.usage.all"
 
     static let defaultBudgetMinutes = 45
+    static let defaultBypassLimitMinutes = 60
     static let bypassUsageEvidenceSeconds = 30
     static let pollutionIncrement = TimeTankRules.bypassPollutionIncrement
 }
@@ -40,4 +41,6 @@ enum TimeTankDefaultsKey {
     static let lastShieldActionDate = "lastShieldActionDate"
     static let bypassCount = "bypassCount"
     static let budgetedAppUsedDuringBypass = "budgetedAppUsedDuringBypass"
+    static let bypassLimitMinutes = "bypassLimitMinutes"
+    static let dailySnapshots = "dailySnapshots"
 }

@@ -13,6 +13,7 @@ public enum TimeTankRules {
     public static let initialSpentPollution = 0.2
     public static let bypassPollutionIncrement = 0.2
     public static let maximumPollution = 1.0
+    public static let maximumBypassLimitMinutes = 720
 
     public static func clampedPollution(_ value: Double) -> Double {
         min(maximumPollution, max(0, value))
@@ -26,18 +27,23 @@ public enum TimeTankRules {
         clampedPollution(currentPollution + bypassPollutionIncrement)
     }
 
-    // Escalating bypass windows: longer grace period each time, but tank fills up.
+    public static func normalizedBypassLimitMinutes(_ minutes: Int) -> Int {
+        min(maximumBypassLimitMinutes, max(5, minutes))
+    }
+
+    // Escalating bypass windows: longer grace period each time, capped by the user's preference.
     // 1-min budget = test mode, always 1-min windows.
-    // Production: 5 -> 10 -> 15 -> 30 -> 60 min based on how many bypasses were actually used.
-    public static func bypassWindowMinutes(bypassCount: Int, budgetMinutes: Int) -> Int {
+    public static func bypassWindowMinutes(
+        bypassCount: Int,
+        budgetMinutes: Int,
+        maximumBypassMinutes: Int = 60
+    ) -> Int {
         if budgetMinutes <= 1 { return 1 }
-        switch bypassCount {
-        case 0:  return 5   // 20% pollution — jarring reminder
-        case 1:  return 10  // 40% pollution — pushing it
-        case 2:  return 15  // 60% pollution — clearly checked out
-        case 3:  return 30  // 80% pollution — nearly failed the day
-        default: return 60  // 100% pollution — Finn is suffering, day is lost
-        }
+
+        let cappedMaximum = normalizedBypassLimitMinutes(maximumBypassMinutes)
+        let ladder = [5, 15, 30, 60, 120, 240, 480, maximumBypassLimitMinutes]
+        let window = ladder[min(max(0, bypassCount), ladder.count - 1)]
+        return min(window, cappedMaximum)
     }
 
     public static func usageProgress(usedMinutes: Int, budgetMinutes: Int) -> Double {

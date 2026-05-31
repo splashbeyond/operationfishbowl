@@ -79,6 +79,7 @@ struct VerifyMVPAcceptance {
             shieldAction.contains("store.markShieldAction()") &&
             shieldAction.contains("store.incrementPollution()") &&
             shieldAction.contains("startBypassCooldown") &&
+            shieldAction.contains("maximumBypassMinutes: store.bypassLimitMinutes") &&
             !shieldAction.contains("UNNotificationRequest"),
             "Shield action must log action, increment murkiness, start bypass cooldown, and not schedule timer-only notifications."
         )
@@ -91,8 +92,24 @@ struct VerifyMVPAcceptance {
         try expect(
             settings.contains("Last shield action") &&
             settings.contains("Threshold reached") &&
-            settings.contains("Active schedules"),
-            "Settings diagnostics must expose threshold, schedule, and shield-action evidence."
+            settings.contains("Active schedules") &&
+            settings.contains("BYPASS CAP") &&
+            settings.contains("[15, 30, 60, 120, 240, 480, 720]"),
+            "Settings diagnostics must expose threshold, schedule, shield-action evidence, and the user bypass cap."
+        )
+        try expect(
+            stats.contains("weekLog") &&
+            stats.contains("MonthFinnLogView") &&
+            stats.contains("FinnDayCircle") &&
+            stats.contains("TimeTankStore.dayKey"),
+            "Stats must show Finn's week log and expand to the month log from saved daily snapshots."
+        )
+        try expect(
+            store.contains("TimeTankDailySnapshot") &&
+            store.contains("dailySnapshots") &&
+            store.contains("recordDailySnapshot") &&
+            store.contains("awardCleanDayIfNeeded"),
+            "Store must persist end-of-day Finn snapshots for the Stats log."
         )
         try expect(
             scheduler.contains("startMonitoring(") &&

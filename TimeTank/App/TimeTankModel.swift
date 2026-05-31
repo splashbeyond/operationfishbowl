@@ -25,6 +25,8 @@ final class TimeTankModel {
     var lastShieldClearDate: Date?
     var lastShieldActionDate: Date?
     var bypassCount: Int
+    var bypassLimitMinutes: Int
+    var dailySnapshots: [TimeTankDailySnapshot]
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -33,6 +35,8 @@ final class TimeTankModel {
 
     init() {
         bypassCount = store.bypassCount
+        bypassLimitMinutes = store.bypassLimitMinutes
+        dailySnapshots = store.dailySnapshots
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -147,6 +151,14 @@ final class TimeTankModel {
         store.dailyBudgetMinutes = dailyBudgetMinutes
         statusMessage = "Got it. \(dailyBudgetMinutes) minutes. Finn's counting on you."
         store.recordDiagnostic("Budget saved: \(dailyBudgetMinutes) minute(s).", source: "App")
+        refresh()
+    }
+
+    func saveBypassLimit(minutes: Int) {
+        bypassLimitMinutes = TimeTankRules.normalizedBypassLimitMinutes(minutes)
+        store.bypassLimitMinutes = bypassLimitMinutes
+        statusMessage = "Bypass cap set to \(Self.durationLabel(for: bypassLimitMinutes))."
+        store.recordDiagnostic("Bypass cap saved: \(bypassLimitMinutes) minute(s).", source: "App")
         refresh()
     }
 
@@ -287,6 +299,8 @@ final class TimeTankModel {
         hasSeenOnboarding = store.hasSeenOnboarding
         pollutionLevel = store.pollutionLevel
         bypassCount = store.bypassCount
+        bypassLimitMinutes = store.bypassLimitMinutes
+        dailySnapshots = store.dailySnapshots
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection
@@ -359,7 +373,11 @@ final class TimeTankModel {
                     let remaining = expiresAt.timeIntervalSinceNow
                     if remaining > 0 {
                         let startNow = Date()
-                        let windowMinutes = TimeTankRules.bypassWindowMinutes(bypassCount: store.bypassCount, budgetMinutes: store.dailyBudgetMinutes)
+                        let windowMinutes = TimeTankRules.bypassWindowMinutes(
+                            bypassCount: store.bypassCount,
+                            budgetMinutes: store.dailyBudgetMinutes,
+                            maximumBypassMinutes: store.bypassLimitMinutes
+                        )
                         try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: startNow)
                         store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
                     }
@@ -375,5 +393,13 @@ final class TimeTankModel {
 
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    static func durationLabel(for minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes) min" }
+        let hours = minutes / 60
+        let remainder = minutes % 60
+        if remainder == 0 { return "\(hours) hr" }
+        return "\(hours)h \(remainder)m"
     }
 }

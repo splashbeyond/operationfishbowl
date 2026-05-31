@@ -11,6 +11,20 @@ struct TimeTankDiagnosticEvent: Identifiable {
     }
 }
 
+struct TimeTankDailySnapshot: Identifiable, Codable {
+    let dayKey: String
+    let pollutionLevel: Double
+    let bypassCount: Int
+    let stateRawValue: String
+    let capturedAt: Date
+
+    var id: String { dayKey }
+
+    var state: TimeTankMurkinessState {
+        TimeTankMurkinessState(rawValue: stateRawValue) ?? .clean
+    }
+}
+
 final class TimeTankStore {
     private let defaults: UserDefaults
 
@@ -25,6 +39,16 @@ final class TimeTankStore {
         }
         set {
             defaults.set(max(1, newValue), forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
+        }
+    }
+
+    var bypassLimitMinutes: Int {
+        get {
+            let stored = defaults.integer(forKey: TimeTankDefaultsKey.bypassLimitMinutes)
+            return stored > 0 ? stored : TimeTankConstants.defaultBypassLimitMinutes
+        }
+        set {
+            defaults.set(TimeTankRules.normalizedBypassLimitMinutes(newValue), forKey: TimeTankDefaultsKey.bypassLimitMinutes)
         }
     }
 
@@ -114,6 +138,23 @@ final class TimeTankStore {
 
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
+    }
+
+    var dailySnapshots: [TimeTankDailySnapshot] {
+        get {
+            guard let data = defaults.data(forKey: TimeTankDefaultsKey.dailySnapshots),
+                  let snapshots = try? JSONDecoder().decode([TimeTankDailySnapshot].self, from: data) else {
+                return []
+            }
+
+            return snapshots.sorted { $0.dayKey > $1.dayKey }
+        }
+        set {
+            let limited = Array(newValue.sorted { $0.dayKey > $1.dayKey }.prefix(370))
+            if let data = try? JSONEncoder().encode(limited) {
+                defaults.set(data, forKey: TimeTankDefaultsKey.dailySnapshots)
+            }
+        }
     }
 
     var selection: FamilyActivitySelection {
@@ -210,6 +251,12 @@ final class TimeTankStore {
 
         guard lastKey != todayKey else { return }
 
+        let hadDayToSave = lastKey != nil || isMonitoringEnabled || pollutionLevel > 0.0001 || isBudgetExceededToday || bypassCount > 0
+        if hadDayToSave {
+            let snapshotDay = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: now)) ?? now
+            recordDailySnapshot(for: snapshotDay, capturedAt: now)
+        }
+
         if pollutionLevel <= 0.0001 {
             currentsBalance += 1
         }
@@ -220,6 +267,32 @@ final class TimeTankStore {
         bypassCount = 0
         budgetedAppUsedDuringBypass = false
         defaults.set(todayKey, forKey: TimeTankDefaultsKey.lastCleanEvaluationDay)
+    }
+
+    func recordDailySnapshot(for date: Date = Date(), capturedAt: Date = Date()) {
+        let calendar = Calendar.current
+        let key = Self.dayKey(for: date, calendar: calendar)
+        let state = TimeTankRules.murkinessState(
+            usageProgress: nil,
+            isBudgetExceeded: isBudgetExceededToday,
+            pollutionLevel: pollutionLevel
+        )
+        let snapshot = TimeTankDailySnapshot(
+            dayKey: key,
+            pollutionLevel: pollutionLevel,
+            bypassCount: bypassCount,
+            stateRawValue: state.rawValue,
+            capturedAt: capturedAt
+        )
+
+        var snapshotsByKey = Dictionary(uniqueKeysWithValues: dailySnapshots.map { ($0.dayKey, $0) })
+        snapshotsByKey[key] = snapshot
+        dailySnapshots = Array(snapshotsByKey.values)
+    }
+
+    func snapshot(for date: Date, calendar: Calendar = .current) -> TimeTankDailySnapshot? {
+        let key = Self.dayKey(for: date, calendar: calendar)
+        return dailySnapshots.first { $0.dayKey == key }
     }
 
     func resetProgress() {
@@ -252,9 +325,12 @@ final class TimeTankStore {
         TimeTankRules.clampedPollution(value)
     }
 
-    private static func dayKey(for date: Date, calendar: Calendar) -> String {
+    static func dayKey(for date: Date, calendar: Calendar) -> String {
         let components = calendar.dateComponents([.year, .month, .day], from: date)
-        return "\(components.year ?? 0)-\(components.month ?? 0)-\(components.day ?? 0)"
+        let year = components.year ?? 0
+        let month = components.month ?? 0
+        let day = components.day ?? 0
+        return String(format: "%04d-%02d-%02d", year, month, day)
     }
 
     private static func encodeDiagnostic(_ event: TimeTankDiagnosticEvent) -> String {

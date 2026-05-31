@@ -46,6 +46,30 @@ struct VerifyMVPRules {
             nearlyEqual(TimeTankRules.usageProgress(usedMinutes: 1, budgetMinutes: 0), 1.0),
             "Invalid zero budget is treated as spent."
         )
+        try expect(
+            TimeTankRules.normalizedBypassLimitMinutes(1) == 5,
+            "Bypass limit cannot be lower than the first real bypass window."
+        )
+        try expect(
+            TimeTankRules.normalizedBypassLimitMinutes(900) == 720,
+            "Bypass limit caps at 12 hours."
+        )
+        try expect(
+            TimeTankRules.bypassWindowMinutes(bypassCount: 0, budgetMinutes: 45, maximumBypassMinutes: 720) == 5,
+            "First real bypass window starts at five minutes."
+        )
+        try expect(
+            TimeTankRules.bypassWindowMinutes(bypassCount: 3, budgetMinutes: 45, maximumBypassMinutes: 30) == 30,
+            "User bypass cap clamps the escalating window."
+        )
+        try expect(
+            TimeTankRules.bypassWindowMinutes(bypassCount: 20, budgetMinutes: 45, maximumBypassMinutes: 720) == 720,
+            "Bypass window can climb to the 12-hour maximum."
+        )
+        try expect(
+            TimeTankRules.bypassWindowMinutes(bypassCount: 20, budgetMinutes: 1, maximumBypassMinutes: 720) == 1,
+            "One-minute real-device verification keeps one-minute bypass windows."
+        )
 
         try expect(
             TimeTankRules.murkinessState(usageProgress: 0.2, isBudgetExceeded: false, pollutionLevel: 0) == .clean,
