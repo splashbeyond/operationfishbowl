@@ -94,8 +94,8 @@ struct FocusTankView: View {
         case 0..<0.2:   return "FinnMascot"            // Blissful — clean tank
         case 0.2..<0.4: return "FinnMascotAlert"      // Alert
         case 0.4..<0.8: return "FinnMascotWorried"    // Worried — 40–80%
-        case 0.8..<1.0: return "FinnMascotDistressed" // Distressed — 80–100%
-        default:        return "FinnMascotSuffering"  // Suffering — 100%
+        case 0.8..<1.0: return "FinnMascotSuffering"  // Suffering — 80–100%
+        default:        return "FinnMascotDistressed"  // Distressed — 100%
         }
     }
 
