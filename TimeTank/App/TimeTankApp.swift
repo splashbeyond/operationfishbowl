@@ -1,3 +1,5 @@
+import CoreFoundation
+import ManagedSettings
 import SwiftUI
 import UserNotifications
 
@@ -24,11 +26,41 @@ struct TimeTankApp: App {
                 model.refresh()
             }
         }
+        .onAppear {
+            registerDarwinBudgetObserver()
+        }
     }
 }
 
 extension Notification.Name {
     static let openTankTab = Notification.Name("openTankTab")
+}
+
+// Darwin (cross-process) notification name — posted by monitor extension when threshold fires
+private let kBudgetReachedDarwinName = "com.piperstudio.timetank.budgetReached" as CFString
+
+extension TimeTankApp {
+    // Registers a Darwin observer so the main app can re-apply the shield if it's open
+    // when the monitor extension fires (handles cases where ManagedSettings write from
+    // the extension context fails or is delayed)
+    func registerDarwinBudgetObserver() {
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            nil,
+            { _, _, _, _, _ in
+                DispatchQueue.main.async {
+                    let store = TimeTankStore()
+                    store.recordDiagnostic("Darwin budget signal received — refreshing shield.", source: "App")
+                    if store.hasSelection {
+                        ScreenTimeShielding.applyShield(for: store.selection)
+                    }
+                }
+            },
+            kBudgetReachedDarwinName,
+            nil,
+            .deliverImmediately
+        )
+    }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {

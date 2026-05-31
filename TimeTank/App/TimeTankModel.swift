@@ -218,7 +218,8 @@ final class TimeTankModel {
             isMonitoringEnabled = true
             scheduleError = nil
             statusMessage = "TimeTank is watching the water."
-            store.recordDiagnostic("Monitoring registered OK — \(appCount) app token(s) active.", source: "App")
+            let activeSchedules = DeviceActivityCenter().activities.map { $0.rawValue }.joined(separator: ", ")
+            store.recordDiagnostic("Monitoring registered OK — \(appCount) app token(s). Active: [\(activeSchedules.isEmpty ? "none!" : activeSchedules)]", source: "App")
         } catch {
             store.isMonitoringEnabled = false
             store.lastScheduleError = error.localizedDescription

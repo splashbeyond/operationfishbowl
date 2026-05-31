@@ -1,3 +1,4 @@
+import CoreFoundation
 import DeviceActivity
 import Foundation
 import UserNotifications
@@ -80,6 +81,7 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
 
             if totalTokens > 0 {
                 ScreenTimeShielding.applyShield(for: selection)
+                postDarwinBudgetSignal()
                 scheduleThresholdNotification()
             } else {
                 // Selection has no tokens in this process — this is a critical failure.
@@ -97,7 +99,15 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
         }
     }
 
-    // MARK: - Notifications
+    // MARK: - Signals
+
+    private func postDarwinBudgetSignal() {
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName("com.piperstudio.timetank.budgetReached" as CFString),
+            nil, nil, true
+        )
+    }
 
     private func scheduleThresholdNotification(shieldFailed: Bool = false) {
         let content = UNMutableNotificationContent()
