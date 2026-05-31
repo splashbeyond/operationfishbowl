@@ -34,7 +34,7 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
             ScreenTimeShielding.clearShield()
             try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: bypassStart)
             store.recordDiagnostic("Secondary shield button tapped; bypass counted and window started.", source: "ShieldAction")
-            completionHandler(.close)
+            completionHandler(.none)
 
         @unknown default:
             completionHandler(.none)
