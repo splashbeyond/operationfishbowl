@@ -97,18 +97,26 @@ struct StatsView: View {
                 .accessibilityLabel("Open month log")
             }
 
-            HStack(spacing: 8) {
-                ForEach(weekDates, id: \.self) { date in
-                    FinnDayCircle(
-                        date: date,
-                        pollutionLevel: pollutionLevel(for: date),
-                        isToday: Calendar.current.isDateInToday(date),
-                        size: 56,
-                        showsCircle: false
-                    )
-                    .frame(maxWidth: .infinity)
+            GeometryReader { proxy in
+                let spacing: CGFloat = 2
+                let cellWidth = max(32, (proxy.size.width - (spacing * 6)) / 7)
+                let finnWidth = min(44, cellWidth)
+
+                HStack(spacing: spacing) {
+                    ForEach(weekDates, id: \.self) { date in
+                        FinnDayCircle(
+                            date: date,
+                            pollutionLevel: pollutionLevel(for: date),
+                            isToday: Calendar.current.isDateInToday(date),
+                            size: finnWidth,
+                            showsCircle: false,
+                            plainHeight: finnWidth * 1.5
+                        )
+                        .frame(width: cellWidth)
+                    }
                 }
             }
+            .frame(height: 82)
         }
         .padding(.horizontal, 4)
         .contentShape(Rectangle())
@@ -171,11 +179,12 @@ private struct FinnDayCircle: View {
     let isToday: Bool
     let size: CGFloat
     var showsCircle = true
+    var plainHeight: CGFloat?
 
     var body: some View {
         VStack(spacing: 4) {
             finnImage
-                .frame(width: size, height: size)
+                .frame(width: size, height: imageHeight)
 
             Text(dayLabel)
                 .font(.system(size: size < 38 ? 9 : 10, weight: .bold, design: .rounded))
@@ -198,6 +207,10 @@ private struct FinnDayCircle: View {
         } else {
             stateImage
         }
+    }
+
+    private var imageHeight: CGFloat {
+        showsCircle ? size : plainHeight ?? size
     }
 
     @ViewBuilder
