@@ -30,7 +30,7 @@ public enum TimeTankRules {
         guard budgetMinutes > 0 else { return maximumPollution }
         let budgetSeconds = Double(budgetMinutes) * 60.0
         let basePollution = min(1.0, overflowSeconds / budgetSeconds)
-        let bypassPenalty = Double(bypassCount) * 0.05
+        let bypassPenalty = Double(bypassCount) * bypassPollutionIncrement
         return clampedPollution(basePollution + bypassPenalty)
     }
 

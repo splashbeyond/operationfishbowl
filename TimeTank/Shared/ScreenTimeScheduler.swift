@@ -45,7 +45,7 @@ enum ScreenTimeScheduler {
             applications: selection.applicationTokens,
             categories: selection.categoryTokens,
             webDomains: selection.webDomainTokens,
-            threshold: DateComponents(minute: TimeTankConstants.bypassWindowMinutes)
+            threshold: DateComponents(second: 30)
         )
 
         try DeviceActivityCenter().startMonitoring(
