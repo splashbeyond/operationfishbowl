@@ -7,58 +7,117 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
 
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
+        store.recordDiagnostic("intervalDidStart: \(activity.rawValue)", source: "Monitor")
 
         if activity == TimeTankConstants.bypassActivityName {
-            store.recordDiagnostic("Bypass interval started.", source: "Monitor")
             return
         }
 
-        guard activity == TimeTankConstants.dailyActivityName else {
-            store.recordDiagnostic("Unknown interval started: \(String(describing: activity)).", source: "Monitor")
-            return
-        }
+        guard activity == TimeTankConstants.dailyActivityName else { return }
 
         store.awardCleanDayIfNeeded()
-        ScreenTimeShielding.clearShield()
-        store.recordDiagnostic("Daily interval started; progress evaluated.", source: "Monitor")
+
+        // Only clear the shield if the budget has NOT already been exceeded today.
+        // If budget was exceeded and monitoring was restarted (e.g. user changed settings),
+        // keep the shield up rather than letting them back in.
+        if !store.isBudgetExceededToday {
+            ScreenTimeShielding.clearShield()
+            store.recordDiagnostic("Daily interval started — shield cleared (budget not yet spent).", source: "Monitor")
+        } else {
+            // Budget already exceeded — re-apply shield so it stays up after a monitoring restart
+            let selection = store.selection
+            let tokenCount = selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+            if tokenCount > 0 {
+                ScreenTimeShielding.applyShield(for: selection)
+                store.recordDiagnostic("Daily interval started — shield re-applied (budget already spent, \(tokenCount) token(s)).", source: "Monitor")
+            } else {
+                store.recordDiagnostic("Daily interval started — budget exceeded but selection has 0 tokens, shield not applied.", source: "Monitor")
+            }
+        }
     }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
         super.intervalDidEnd(for: activity)
+        store.recordDiagnostic("intervalDidEnd: \(activity.rawValue)", source: "Monitor")
 
         if activity == TimeTankConstants.bypassActivityName {
             store.clearBypassWindow()
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
-            store.recordDiagnostic("Bypass interval ended.", source: "Monitor")
 
             if store.shouldReapplyShield() {
-                ScreenTimeShielding.applyShield(for: store.selection)
-                store.recordDiagnostic("Shield reapplied after bypass interval ended.", source: "Monitor")
+                let selection = store.selection
+                let tokenCount = selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+                if tokenCount > 0 {
+                    ScreenTimeShielding.applyShield(for: selection)
+                    store.recordDiagnostic("Shield reapplied after bypass interval ended (\(tokenCount) token(s)).", source: "Monitor")
+                } else {
+                    store.recordDiagnostic("Bypass ended — 0 tokens in selection, shield not reapplied.", source: "Monitor")
+                }
             }
-        }
-
-        if activity == TimeTankConstants.dailyActivityName {
-            store.recordDiagnostic("Daily interval ended.", source: "Monitor")
         }
     }
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
+        store.recordDiagnostic("eventDidReachThreshold: \(event.rawValue) in \(activity.rawValue)", source: "Monitor")
 
         if activity == TimeTankConstants.dailyActivityName && event == TimeTankConstants.budgetEventName {
             store.markBudgetExceeded()
-            store.recordDiagnostic("Daily budget threshold reached.", source: "Monitor")
-            ScreenTimeShielding.applyShield(for: store.selection)
+
+            // Diagnose app group access — if this returns nil the extension can't read the selection
+            let groupDefaults = UserDefaults(suiteName: TimeTankConstants.appGroupIdentifier)
+            let primaryBytes  = groupDefaults?.data(forKey: TimeTankDefaultsKey.selectionData)?.count ?? 0
+            let backupBytes   = groupDefaults?.data(forKey: TimeTankDefaultsKey.selectionDataBackup)?.count ?? 0
+            store.recordDiagnostic("App group data: primary=\(primaryBytes)b backup=\(backupBytes)b", source: "Monitor")
+
+            let selection = store.selection
+            let appTokens  = selection.applicationTokens.count
+            let catTokens  = selection.categoryTokens.count
+            let webTokens  = selection.webDomainTokens.count
+            let totalTokens = appTokens + catTokens + webTokens
+
+            store.recordDiagnostic("Budget threshold reached — applying shield to \(appTokens) app(s), \(catTokens) cat(s), \(webTokens) web(s).", source: "Monitor")
+
+            if totalTokens > 0 {
+                ScreenTimeShielding.applyShield(for: selection)
+                scheduleThresholdNotification()
+            } else {
+                // Selection has no tokens in this process — this is a critical failure.
+                // Send a notification so the user knows their budget ran out even though
+                // the shield could not be applied.
+                store.recordDiagnostic("CRITICAL: 0 tokens in selection — shield NOT applied. Check app group UserDefaults.", source: "Monitor")
+                scheduleThresholdNotification(shieldFailed: true)
+            }
         }
 
         if activity == TimeTankConstants.bypassActivityName && event == TimeTankConstants.bypassUsageEventName {
             store.markBudgetedAppUsedDuringBypass()
-            scheduleBypassExpiryNotificationIfNeeded()
-            store.recordDiagnostic("Budgeted app usage detected during bypass; expiry notification armed.", source: "Monitor")
+            scheduleBypassExpiryNotification()
+            store.recordDiagnostic("Budgeted app usage detected during bypass.", source: "Monitor")
         }
     }
 
-    private func scheduleBypassExpiryNotificationIfNeeded() {
+    // MARK: - Notifications
+
+    private func scheduleThresholdNotification(shieldFailed: Bool = false) {
+        let content = UNMutableNotificationContent()
+        content.title = "Budget spent."
+        if shieldFailed {
+            content.body = "Open TimeTank to re-activate Finn's protection."
+        } else {
+            content.body = "Finn's watching. Your selected apps are now blocked."
+        }
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "budget-reached",
+            content: content,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleBypassExpiryNotification() {
         guard store.isBypassActive(), let expiresAt = store.bypassExpiresAt else { return }
 
         let center = UNUserNotificationCenter.current()

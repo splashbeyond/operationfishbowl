@@ -60,4 +60,5 @@ enum TimeTankDefaultsKey {
     static let dailySnapshots = "dailySnapshots"
     static let appearanceMode = "appearanceMode"
     static let lastBudgetSaveDate = "lastBudgetSaveDate"
+    static let selectionDataBackup = "selectedDistractionAppsBackup"
 }

@@ -168,17 +168,28 @@ final class TimeTankStore {
 
     var selection: FamilyActivitySelection {
         get {
-            guard let data = defaults.data(forKey: TimeTankDefaultsKey.selectionData),
-                  let selection = try? PropertyListDecoder().decode(FamilyActivitySelection.self, from: data) else {
-                return FamilyActivitySelection()
+            // Primary read
+            if let data = defaults.data(forKey: TimeTankDefaultsKey.selectionData),
+               let selection = try? PropertyListDecoder().decode(FamilyActivitySelection.self, from: data) {
+                return selection
             }
-
-            return selection
+            // Backup read — written simultaneously on save, different key in case of key corruption
+            if let data = defaults.data(forKey: TimeTankDefaultsKey.selectionDataBackup),
+               let selection = try? PropertyListDecoder().decode(FamilyActivitySelection.self, from: data) {
+                return selection
+            }
+            return FamilyActivitySelection()
         }
         set {
-            if let data = try? PropertyListEncoder().encode(newValue) {
+            // Write to both keys every time — ensures extension processes always have a valid copy
+            // even if one key becomes stale or inaccessible across app group boundaries.
+            let encoder = PropertyListEncoder()
+            encoder.outputFormat = .binary
+            if let data = try? encoder.encode(newValue) {
                 defaults.set(data, forKey: TimeTankDefaultsKey.selectionData)
+                defaults.set(data, forKey: TimeTankDefaultsKey.selectionDataBackup)
             }
+            defaults.synchronize()
         }
     }
 
