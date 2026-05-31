@@ -31,7 +31,8 @@ final class TimeTankShieldActionExtension: ShieldActionDelegate {
             let bypassStart = Date()
             // Calculate window BEFORE incrementing so all three use the same value
             let windowMinutes = TimeTankRules.bypassWindowMinutes(bypassCount: store.bypassCount, budgetMinutes: store.dailyBudgetMinutes)
-            store.incrementBypassCount()
+            store.bypassCount += 1
+            store.incrementPollution()
             store.startBypassWindow(windowMinutes: windowMinutes, now: bypassStart)
             ScreenTimeShielding.clearShield()
             try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: bypassStart)

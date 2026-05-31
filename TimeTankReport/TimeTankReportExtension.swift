@@ -61,14 +61,6 @@ struct TimeTankUsageReport: DeviceActivityReportScene {
             .map { AppUsageItem(name: $0.key, duration: $0.value.duration, pickups: $0.value.pickups) }
             .sorted { $0.duration > $1.duration }
 
-        // Write overflow seconds to shared defaults so the main app can recalculate pollution
-        if let sharedDefaults = UserDefaults(suiteName: TimeTankConstants.appGroupIdentifier) {
-            let budgetMinutes = sharedDefaults.integer(forKey: TimeTankDefaultsKey.dailyBudgetMinutes)
-            let effectiveBudget = Double(budgetMinutes > 0 ? budgetMinutes : TimeTankConstants.defaultBudgetMinutes) * 60.0
-            let overflow = max(0.0, configuration.selectedAppDuration - effectiveBudget)
-            sharedDefaults.set(overflow, forKey: TimeTankDefaultsKey.overflowSeconds)
-        }
-
         return configuration
     }
 }

@@ -60,8 +60,10 @@ Test mode (budget ≤ 1 min) always returns 1 minute regardless of bypass count.
 
 ---
 
-### Pollution Per Bypass
-Each "Open Anyway" tap adds **20% pollution** (up from 5%). Five bypasses = fully polluted tank. Formula lives in `TimeTankRules.continuousPollution()` — overflow time + bypass count both contribute.
+### Event-Based Pollution
+The MVP uses the criteria doc's event-based pollution model. Crossing the daily threshold sets pollution to at least **20%**, and each "Open Anyway" tap adds **20% pollution**. Five bypasses = fully polluted tank.
+
+Reports and overflow minutes are useful for reflection, but they do not drive MVP enforcement or murkiness because Screen Time reports can update late.
 
 ---
 
@@ -75,7 +77,7 @@ This was the hardest problem. `DeviceActivityCenter.startMonitoring` is unreliab
 
 **Path C — Notification fallback:** A local notification fires at `bypassExpiresAt`. User taps it, TimeTank opens, shield reapplied immediately via Path B.
 
-Key fix: `ScreenTimeScheduler.startBypassCooldown` now uses a **single** `DeviceActivityCenter` instance and the event threshold is `DateComponents(second: 30)` — not the full bypass window duration.
+Key fix: `ScreenTimeScheduler.startBypassCooldown` now uses a **single** `DeviceActivityCenter` instance, a 10-second start buffer, and a threshold matching the actual bypass window so the shield does not reappear early.
 
 ---
 
@@ -139,8 +141,8 @@ Original image was 4096×6144 portrait with black bars. Detected content bounds,
 | `TimeTankShieldAction/TimeTankShieldActionExtension.swift` | Immediate bypass count, `.none` completion, escalating window calc, notification scheduling |
 | `TimeTankShieldConfiguration/TimeTankShieldConfigurationExtension.swift` | Updated thresholds, correct Finn faces |
 | `TimeTankShieldConfiguration/ShieldAssets.xcassets/` | Finn images resized to 400×400 |
-| `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()`, bypass penalty 20% |
-| `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, 30s event threshold |
+| `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()`, event-based 20% threshold and bypass pollution |
+| `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, bypass-window event threshold |
 | `TimeTank/Shared/TimeTankStore.swift` | `startBypassWindow` takes explicit window parameter |
 | `TimeTank/App/TimeTankModel.swift` | Notification scheduling, `enforceExpiredBypassIfNeeded`, notification permission request |
 | `TimeTank/App/TimeTankApp.swift` | `scenePhase.active` refresh, deep-link handler, `AppDelegate` with `UNUserNotificationCenterDelegate` |

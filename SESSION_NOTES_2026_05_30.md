@@ -48,8 +48,13 @@ Logic lives in `TimeTankRules.bypassWindowMinutes(bypassCount:budgetMinutes:)`:
 | > 1 min | 4th | 30 min |
 | > 1 min | 5th+ | 60 min |
 
-### 5. Pollution Per Bypass
-`TimeTankRules.continuousPollution` — bypass penalty changed from `0.05` (5%) to `bypassPollutionIncrement` (0.2 = **20% per bypass**). 5 bypasses = 100% full tank.
+### 5. Event-Based Pollution
+The MVP follows the criteria doc's event-based murkiness rule:
+- Daily threshold reached: pollution becomes at least 20%.
+- Each "Open Anyway" bypass: adds 20%.
+- 5 bypasses = 100% full tank.
+
+Do not drive MVP pollution from continuously reported overflow minutes. DeviceActivity reports can lag, so reports stay in Stats and enforcement/murkiness stay tied to threshold and bypass events.
 
 ### 6. Shield Reappearance After Bypass (Three Paths)
 **Path A** — Extension scheduling works: `startBypassCooldown()` called from `TimeTankShieldActionExtension` → monitor's `intervalDidEnd` fires → shield reapplied automatically.
@@ -58,7 +63,7 @@ Logic lives in `TimeTankRules.bypassWindowMinutes(bypassCount:budgetMinutes:)`:
 
 **Path C** — Notification fallback: notification fires at `bypassExpiresAt` → user taps → TimeTank opens → shield immediately reapplied.
 
-Key fix in `ScreenTimeScheduler.startBypassCooldown`: now uses a single `DeviceActivityCenter` instance and adds a **10-second buffer** to the schedule start time to prevent stale timing when called from extension processes.
+Key fix in `ScreenTimeScheduler.startBypassCooldown`: now uses a single `DeviceActivityCenter` instance and adds a **10-second buffer** to the schedule start time to prevent stale timing when called from extension processes. The bypass threshold matches the selected bypass window so the shield does not reappear early during an active bypass.
 
 ### 7. Scene Phase Observer
 Added to `TimeTankApp.swift`:
@@ -105,8 +110,8 @@ Tank pollution thresholds in `FocusTankView.finnFaceName`:
 | `TimeTankShieldAction/TimeTankShieldActionExtension.swift` | Bypass count immediate, `.none` completion, escalating window calc |
 | `TimeTankShieldConfiguration/TimeTankShieldConfigurationExtension.swift` | Updated pollution thresholds for shield faces |
 | `TimeTankShieldConfiguration/ShieldAssets.xcassets/` | Resized Finn images to 400×400 |
-| `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()` function, bypass penalty 20% |
-| `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, 30s event threshold |
+| `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()` function, event-based 20% threshold and bypass pollution |
+| `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, bypass-window event threshold |
 | `TimeTank/Shared/TimeTankStore.swift` | `startBypassWindow` uses dynamic window from `TimeTankRules` |
 | `TimeTank/App/TimeTankModel.swift` | Scene phase observer, notification scheduling, `enforceExpiredBypassIfNeeded` improvements |
 | `TimeTank/App/TimeTankApp.swift` | `scenePhase.active` → `model.refresh()` |

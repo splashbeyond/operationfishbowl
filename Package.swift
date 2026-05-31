@@ -19,6 +19,7 @@ let package = Package(
             exclude: [
                 "ScreenTimeScheduler.swift",
                 "ScreenTimeShielding.swift",
+                "TimeTankActivityAttributes.swift",
                 "TimeTankConstants.swift",
                 "TimeTankStore.swift"
             ],

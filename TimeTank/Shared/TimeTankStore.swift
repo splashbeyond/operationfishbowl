@@ -107,11 +107,6 @@ final class TimeTankStore {
         set { defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.bypassCount) }
     }
 
-    var overflowSeconds: TimeInterval {
-        get { defaults.double(forKey: TimeTankDefaultsKey.overflowSeconds) }
-        set { defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.overflowSeconds) }
-    }
-
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
@@ -140,23 +135,22 @@ final class TimeTankStore {
 
     func incrementBypassCount() {
         bypassCount += 1
-        lastBypassDate = Date()
-        recalculatePollution()
+        incrementPollution()
     }
 
-    func recalculatePollution() {
-        guard isBudgetExceededToday else { return }
-        pollutionLevel = TimeTankRules.continuousPollution(
-            overflowSeconds: overflowSeconds,
-            budgetMinutes: dailyBudgetMinutes,
-            bypassCount: bypassCount
-        )
+    func incrementPollution(by amount: Double = TimeTankConstants.pollutionIncrement) {
+        if amount == TimeTankConstants.pollutionIncrement {
+            pollutionLevel = TimeTankRules.pollutionAfterBypass(currentPollution: pollutionLevel)
+        } else {
+            pollutionLevel = TimeTankRules.clampedPollution(pollutionLevel + amount)
+        }
+        lastBypassDate = Date()
     }
 
     func markBudgetExceeded(now: Date = Date()) {
         isBudgetExceededToday = true
         lastThresholdDate = now
-        // Pollution rises with actual overflow time + bypasses — no flat initial bump
+        pollutionLevel = TimeTankRules.pollutionAfterBudgetReached(currentPollution: pollutionLevel)
     }
 
     func markMonitoringStarted(now: Date = Date()) {
@@ -213,7 +207,6 @@ final class TimeTankStore {
         isBudgetExceededToday = false
         bypassExpiresAt = nil
         bypassCount = 0
-        overflowSeconds = 0
         defaults.set(todayKey, forKey: TimeTankDefaultsKey.lastCleanEvaluationDay)
     }
 
@@ -227,7 +220,6 @@ final class TimeTankStore {
         lastThresholdDate = nil
         lastShieldActionDate = nil
         bypassCount = 0
-        overflowSeconds = 0
     }
 
     func recordDiagnostic(_ message: String, source: String, now: Date = Date()) {

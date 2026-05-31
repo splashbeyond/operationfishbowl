@@ -32,6 +32,8 @@ plutil -lint TimeTankShieldConfiguration/Info.plist
 plutil -lint TimeTankShieldConfiguration/TimeTankShieldConfiguration.entitlements
 plutil -lint TimeTankReport/Info.plist
 plutil -lint TimeTankReport/TimeTankReport.entitlements
+plutil -lint TimeTankWidget/Info.plist
+plutil -lint TimeTankWidgetExtension.entitlements
 
 if [[ "$skip_ios_build" == "1" ]]; then
   echo "== iOS build skipped by --skip-ios-build =="

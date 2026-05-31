@@ -21,6 +21,7 @@ struct VerifyMVPAcceptance {
         let stats = try read("TimeTank/App/StatsView.swift")
         let store = try read("TimeTank/Shared/TimeTankStore.swift")
         let monitor = try read("TimeTankMonitor/TimeTankMonitorExtension.swift")
+        let report = try read("TimeTankReport/TimeTankReportExtension.swift")
         let shieldAction = try read("TimeTankShieldAction/TimeTankShieldActionExtension.swift")
         let settings = try read("TimeTank/App/SettingsView.swift")
         let scheduler = try read("TimeTank/Shared/ScreenTimeScheduler.swift")
@@ -47,6 +48,12 @@ struct VerifyMVPAcceptance {
         try expect(
             stats.contains("DeviceActivityReport"),
             "Stats must host the DeviceActivityReport."
+        )
+        try expect(
+            !report.contains("overflowSeconds") &&
+            !report.contains("continuousPollution") &&
+            !report.contains("sharedDefaults.set"),
+            "DeviceActivityReport must not mutate enforcement or murkiness state."
         )
         try expect(
             stats.contains("applications: model.selection.applicationTokens") &&
@@ -85,6 +92,11 @@ struct VerifyMVPAcceptance {
             scheduler.contains("TimeTankConstants.dailyActivityName") &&
             scheduler.contains("events: [TimeTankConstants.budgetEventName: event]"),
             "Scheduler must use one daily activity and one budget threshold event."
+        )
+        try expect(
+            scheduler.contains("threshold: DateComponents(minute: max(1, windowMinutes))") &&
+            !scheduler.contains("DateComponents(second: 30)"),
+            "Bypass cooldown threshold must match the actual bypass window."
         )
         try expect(
             budget.contains("[15, 30, 60, 120]") &&
