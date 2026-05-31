@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -45,6 +45,10 @@
 		100000000000000000000024 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
 		100000000000000000000025 /* TimeTankRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000001F /* TimeTankRules.swift */; };
 		720AF16F2FCBC48A0000D127 /* ShieldAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 720AF16E2FCBC48A0000D127 /* ShieldAssets.xcassets */; };
+		720AF1772FCBD8770000D127 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 720AF1762FCBD8770000D127 /* WidgetKit.framework */; };
+		720AF1792FCBD8770000D127 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 720AF1782FCBD8770000D127 /* SwiftUI.framework */; };
+		720AF1882FCBD8780000D127 /* TimeTankWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 720AF1742FCBD8770000D127 /* TimeTankWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		720AF1922FCBDAE10000D127 /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000B /* Resources/Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +80,13 @@
 			remoteGlobalIDString = 500000000000000000000005;
 			remoteInfo = TimeTankReport;
 		};
+		720AF1862FCBD8780000D127 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 400000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 720AF1732FCBD8770000D127;
+			remoteInfo = TimeTankWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -87,6 +98,7 @@
 			files = (
 				10000000000000000000001A /* TimeTankMonitor.appex in Embed App Extensions */,
 				10000000000000000000001B /* TimeTankShieldAction.appex in Embed App Extensions */,
+				720AF1882FCBD8780000D127 /* TimeTankWidgetExtension.appex in Embed App Extensions */,
 				10000000000000000000001C /* TimeTankShieldConfiguration.appex in Embed App Extensions */,
 				100000000000000000000021 /* TimeTankReport.appex in Embed App Extensions */,
 			);
@@ -133,7 +145,26 @@
 		200000000000000000000103 /* TimeTankShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000104 /* TimeTankReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		720AF16E2FCBC48A0000D127 /* ShieldAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ShieldAssets.xcassets; sourceTree = "<group>"; };
+		720AF1742FCBD8770000D127 /* TimeTankWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		720AF1762FCBD8770000D127 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		720AF1782FCBD8770000D127 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		720AF1912FCBDAA60000D127 /* TimeTankWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TimeTankWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		720AF1892FCBD8780000D127 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				TimeTankLiveActivity.swift,
+			);
+			target = 720AF1732FCBD8770000D127 /* TimeTankWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		720AF17A2FCBD8770000D127 /* TimeTankWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (720AF1892FCBD8780000D127 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TimeTankWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		700000000000000000000001 /* Frameworks */ = {
@@ -171,17 +202,38 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		720AF1712FCBD8770000D127 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				720AF1792FCBD8770000D127 /* SwiftUI.framework in Frameworks */,
+				720AF1772FCBD8770000D127 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		720AF1752FCBD8770000D127 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				720AF1762FCBD8770000D127 /* WidgetKit.framework */,
+				720AF1782FCBD8770000D127 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		800000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				720AF1912FCBDAA60000D127 /* TimeTankWidgetExtension.entitlements */,
 				800000000000000000000002 /* TimeTank */,
 				800000000000000000000005 /* TimeTankMonitor */,
 				800000000000000000000006 /* TimeTankShieldAction */,
 				800000000000000000000007 /* TimeTankShieldConfiguration */,
 				800000000000000000000009 /* TimeTankReport */,
+				720AF17A2FCBD8770000D127 /* TimeTankWidget */,
+				720AF1752FCBD8770000D127 /* Frameworks */,
 				800000000000000000000008 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -267,6 +319,7 @@
 				200000000000000000000102 /* TimeTankShieldAction.appex */,
 				200000000000000000000103 /* TimeTankShieldConfiguration.appex */,
 				200000000000000000000104 /* TimeTankReport.appex */,
+				720AF1742FCBD8770000D127 /* TimeTankWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -300,6 +353,7 @@
 				B00000000000000000000002 /* PBXTargetDependency */,
 				B00000000000000000000003 /* PBXTargetDependency */,
 				B00000000000000000000004 /* PBXTargetDependency */,
+				720AF1872FCBD8780000D127 /* PBXTargetDependency */,
 			);
 			name = TimeTank;
 			productName = TimeTank;
@@ -374,6 +428,28 @@
 			productReference = 200000000000000000000104 /* TimeTankReport.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		720AF1732FCBD8770000D127 /* TimeTankWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 720AF18A2FCBD8780000D127 /* Build configuration list for PBXNativeTarget "TimeTankWidgetExtension" */;
+			buildPhases = (
+				720AF1702FCBD8770000D127 /* Sources */,
+				720AF1712FCBD8770000D127 /* Frameworks */,
+				720AF1722FCBD8770000D127 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				720AF17A2FCBD8770000D127 /* TimeTankWidget */,
+			);
+			name = TimeTankWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = TimeTankWidgetExtension;
+			productReference = 720AF1742FCBD8770000D127 /* TimeTankWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -381,7 +457,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					500000000000000000000001 = {
@@ -398,6 +474,9 @@
 					};
 					500000000000000000000005 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					720AF1732FCBD8770000D127 = {
+						CreatedOnToolsVersion = 26.5;
 					};
 				};
 			};
@@ -419,11 +498,20 @@
 				500000000000000000000003 /* TimeTankShieldAction */,
 				500000000000000000000004 /* TimeTankShieldConfiguration */,
 				500000000000000000000005 /* TimeTankReport */,
+				720AF1732FCBD8770000D127 /* TimeTankWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		720AF1722FCBD8770000D127 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				720AF1922FCBDAE10000D127 /* Resources/Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -465,6 +553,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		720AF1702FCBD8770000D127 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A00000000000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -534,6 +629,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		720AF1872FCBD8780000D127 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 720AF1732FCBD8770000D127 /* TimeTankWidgetExtension */;
+			targetProxy = 720AF1862FCBD8780000D127 /* PBXContainerItemProxy */;
+		};
 		B00000000000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 500000000000000000000002 /* TimeTankMonitor */;
@@ -557,6 +657,73 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		720AF18B2FCBD8780000D127 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TimeTankWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 28D2M73B26;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimeTankWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TimeTankWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.piperstudio.timetank.TimeTankWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		720AF18C2FCBD8780000D127 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TimeTankWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 28D2M73B26;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimeTankWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TimeTankWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.piperstudio.timetank.TimeTankWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		C00000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -929,6 +1096,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		720AF18A2FCBD8780000D127 /* Build configuration list for PBXNativeTarget "TimeTankWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				720AF18B2FCBD8780000D127 /* Debug */,
+				720AF18C2FCBD8780000D127 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		900000000000000000000001 /* Build configuration list for PBXProject "TimeTank" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
