@@ -28,6 +28,7 @@ final class TimeTankModel {
     var dailySnapshots: [TimeTankDailySnapshot]
     var appearanceMode: TimeTankAppearanceMode
     var isBudgetLockedForToday: Bool
+    var hasBudgetBeenSet: Bool
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -39,6 +40,7 @@ final class TimeTankModel {
         dailySnapshots = store.dailySnapshots
         appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
         isBudgetLockedForToday = store.isBudgetLockedForToday
+        hasBudgetBeenSet = store.hasBudgetBeenSet
         selection = store.selection
         dailyBudgetMinutes = store.dailyBudgetMinutes
         pollutionLevel = store.pollutionLevel
@@ -303,6 +305,7 @@ final class TimeTankModel {
         dailySnapshots = store.dailySnapshots
         appearanceMode = TimeTankAppearanceMode(rawValue: store.appearanceModeRawValue) ?? .light
         isBudgetLockedForToday = store.isBudgetLockedForToday
+        hasBudgetBeenSet = store.hasBudgetBeenSet
         currentsBalance = store.currentsBalance
         dailyBudgetMinutes = store.dailyBudgetMinutes
         selection = store.selection

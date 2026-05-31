@@ -6,11 +6,16 @@ struct BudgetSetupView: View {
     @State private var pickerSelection = FamilyActivitySelection()
     @State private var isPickerPresented = false
     @State private var budgetMinutes = TimeTankConstants.defaultBudgetMinutes
-    @State private var saveState: SaveState = .idle
+    @State private var saveState: SaveState = .unset
 
+    // .unset    — first time, no budget ever saved
+    // .active   — budget is set and carrying over, new day, can update
+    // .saving   — brief checkmark confirmation after tapping save
+    // .locked   — saved today, slider locked until tomorrow
     private enum SaveState: Equatable {
-        case idle
-        case saved
+        case unset
+        case active
+        case saving
         case locked
     }
 
@@ -38,9 +43,9 @@ struct BudgetSetupView: View {
             .onAppear {
                 pickerSelection = model.selection
                 budgetMinutes = model.dailyBudgetMinutes
-                if model.isBudgetLockedForToday {
-                    saveState = .locked
-                }
+                saveState = model.isBudgetLockedForToday ? .locked
+                           : model.hasBudgetBeenSet      ? .active
+                           : .unset
             }
         }
     }
@@ -79,23 +84,30 @@ struct BudgetSetupView: View {
                     .tracking(1.2)
                     .foregroundStyle(Color.textMuted)
 
-                // Big time display
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // Budget amount
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(TimeTankModel.durationLabel(for: budgetMinutes))
                         .font(.timeTankMetric(52))
-                        .foregroundStyle(saveState == .locked ? Color.textMuted : Color.textDark)
+                        .foregroundStyle(isSliderLocked ? Color.textMuted : Color.textDark)
                         .contentTransition(.numericText())
                         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: budgetMinutes)
 
-                    if saveState == .locked {
+                    if isSliderLocked {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Color.textMuted.opacity(0.6))
+                            .foregroundStyle(Color.textMuted.opacity(0.5))
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
+                .animation(.spring(response: 0.3, dampingFraction: 0.75), value: isSliderLocked)
 
-                // Slider — disabled when locked
+                // Context line
+                Text(budgetContextLine)
+                    .font(.timeTankBody(14))
+                    .foregroundStyle(Color.textMuted)
+                    .animation(.easeInOut(duration: 0.25), value: saveState)
+
+                // Slider
                 Slider(
                     value: Binding(
                         get: { Double(budgetMinutes) },
@@ -104,43 +116,43 @@ struct BudgetSetupView: View {
                     in: 5...Double(TimeTankConstants.maximumBudgetMinutes),
                     step: 5
                 )
-                .tint(saveState == .locked ? Color.textMuted.opacity(0.4) : Color.tideOrange)
-                .disabled(saveState == .locked)
+                .tint(isSliderLocked ? Color.textMuted.opacity(0.35) : Color.tideOrange)
+                .disabled(isSliderLocked)
 
                 // Tick labels
                 HStack {
-                    Text("5m")
-                    Spacer()
-                    Text("2h")
-                    Spacer()
-                    Text("4h")
-                    Spacer()
+                    Text("5m"); Spacer()
+                    Text("2h"); Spacer()
+                    Text("4h"); Spacer()
                     Text("12h")
                 }
                 .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(Color.textMuted.opacity(0.6))
+                .foregroundStyle(Color.textMuted.opacity(0.55))
 
-                // Save button or locked indicator
+                // Action area
                 ZStack {
-                    if saveState == .locked {
-                        lockedIndicator
+                    switch saveState {
+                    case .unset:
+                        primarySaveButton(label: "Save Budget")
+                            .transition(.opacity)
+
+                    case .active:
+                        updateButton
+                            .transition(.opacity)
+
+                    case .saving:
+                        primarySaveButton(label: "Budget Saved", confirmed: true)
+                            .transition(.opacity)
+
+                    case .locked:
+                        lockedBadge
                             .transition(.asymmetric(
                                 insertion: .opacity.combined(with: .move(edge: .bottom)),
                                 removal: .opacity
                             ))
-                    } else {
-                        saveButton
-                            .transition(.opacity)
                     }
                 }
                 .animation(.spring(response: 0.4, dampingFraction: 0.85), value: saveState)
-
-                if saveState == .idle {
-                    Text("Once saved, your budget is locked in for the day.")
-                        .font(.timeTankBody(12))
-                        .foregroundStyle(Color.textMuted.opacity(0.75))
-                        .transition(.opacity)
-                }
             }
         }
     }
@@ -183,48 +195,69 @@ struct BudgetSetupView: View {
         }
     }
 
-    // MARK: - Save Button States
+    // MARK: - Action Views
 
-    private var saveButton: some View {
+    private func primarySaveButton(label: String, confirmed: Bool = false) -> some View {
         Button {
+            guard !confirmed else { return }
             handleSave()
         } label: {
             HStack(spacing: 8) {
-                if saveState == .saved {
+                if confirmed {
                     Image(systemName: "checkmark")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
                         .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
-                Text(saveState == .saved ? "Budget Saved" : "Save Budget")
+                Text(label)
                     .font(.timeTankButton())
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(saveState == .saved ? Color.tankTeal : Color.tideOrange)
+            .background(confirmed ? Color.tankTeal : Color.tideOrange)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .shadow(
-                color: (saveState == .saved ? Color.tankTeal : Color.tideOrange).opacity(0.3),
+                color: (confirmed ? Color.tankTeal : Color.tideOrange).opacity(0.3),
                 radius: 12, y: 4
             )
         }
         .buttonStyle(.plain)
-        .disabled(saveState == .saved)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: saveState)
+        .disabled(confirmed)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: confirmed)
     }
 
-    private var lockedIndicator: some View {
+    // Subtle secondary-style button for returning users — no action required
+    private var updateButton: some View {
+        Button {
+            handleSave()
+        } label: {
+            Label("Update Budget", systemImage: "pencil")
+                .font(.timeTankButton())
+                .foregroundStyle(Color.tideOrange)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.tideOrange, lineWidth: 1.5)
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var lockedBadge: some View {
         HStack(spacing: 12) {
             Image(systemName: "lock.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.textMuted)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Locked until tomorrow.")
+                Text("Budget is set for today.")
                     .font(.timeTankBody(15))
                     .foregroundStyle(Color.textDark)
-                Text("Come back tomorrow to update your budget.")
+                Text("Finn carries this forward every day. Update tomorrow if you'd like to adjust.")
                     .font(.timeTankBody(13))
                     .foregroundStyle(Color.textMuted)
             }
@@ -238,9 +271,22 @@ struct BudgetSetupView: View {
 
     // MARK: - Helpers
 
+    private var isSliderLocked: Bool {
+        saveState == .locked || saveState == .saving
+    }
+
+    private var budgetContextLine: String {
+        switch saveState {
+        case .unset:   return "How long is fair for these apps each day?"
+        case .active:  return "Finn uses this budget every day. Change it anytime."
+        case .saving:  return "Finn uses this budget every day."
+        case .locked:  return "This budget runs automatically. No action needed."
+        }
+    }
+
     private func handleSave() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            saveState = .saved
+            saveState = .saving
         }
         model.saveBudget(minutes: budgetMinutes)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

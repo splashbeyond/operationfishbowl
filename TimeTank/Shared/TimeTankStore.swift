@@ -157,6 +157,10 @@ final class TimeTankStore {
         return Calendar.current.isDateInToday(saved)
     }
 
+    var hasBudgetBeenSet: Bool {
+        lastBudgetSaveDate != nil
+    }
+
     var appearanceModeRawValue: String {
         get { defaults.string(forKey: TimeTankDefaultsKey.appearanceMode) ?? TimeTankAppearanceMode.light.rawValue }
         set { defaults.set(TimeTankAppearanceMode(rawValue: newValue)?.rawValue ?? TimeTankAppearanceMode.light.rawValue, forKey: TimeTankDefaultsKey.appearanceMode) }
