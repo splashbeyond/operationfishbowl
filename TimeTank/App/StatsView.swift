@@ -99,11 +99,11 @@ struct StatsView: View {
 
             HStack(spacing: 8) {
                 ForEach(weekDates, id: \.self) { date in
-                    FinnDayCircle(
+                    FinnDayStatusView(
                         date: date,
                         pollutionLevel: pollutionLevel(for: date),
                         isToday: Calendar.current.isDateInToday(date),
-                        size: 40
+                        imageSize: 58
                     )
                     .frame(maxWidth: .infinity)
                 }
@@ -164,56 +164,35 @@ struct StatsView: View {
     }
 }
 
-private struct FinnDayCircle: View {
+private struct FinnDayStatusView: View {
     let date: Date
     let pollutionLevel: Double?
     let isToday: Bool
-    let size: CGFloat
+    let imageSize: CGFloat
 
     var body: some View {
-        VStack(spacing: 6) {
-            ZStack {
-                Circle()
-                    .fill(backgroundColor)
-                Circle()
-                    .stroke(isToday ? Color.tideOrange : ringColor, lineWidth: isToday ? 2 : 1)
-
-                if let pollutionLevel {
-                    Image(faceName(for: pollutionLevel))
-                        .resizable()
-                        .scaledToFit()
-                        .padding(size * 0.14)
-                } else {
-                    Image(systemName: "minus")
-                        .font(.system(size: size * 0.26, weight: .semibold))
-                        .foregroundStyle(Color.textMuted.opacity(0.55))
-                }
+        VStack(spacing: 4) {
+            if let pollutionLevel {
+                Image(faceName(for: pollutionLevel))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: imageSize, height: imageSize)
+            } else {
+                Image(systemName: "minus")
+                    .font(.system(size: imageSize * 0.28, weight: .semibold))
+                    .foregroundStyle(Color.textMuted.opacity(0.55))
+                    .frame(width: imageSize, height: imageSize)
             }
-            .frame(width: size, height: size)
 
             Text(dayLabel)
-                .font(.system(size: size < 38 ? 9 : 10, weight: .bold, design: .rounded))
+                .font(.system(size: imageSize < 44 ? 9 : 10, weight: .bold, design: .rounded))
                 .foregroundStyle(isToday ? Color.tideOrange : Color.textMuted)
         }
+        .frame(minHeight: imageSize + 16)
     }
 
     private var dayLabel: String {
         date.formatted(.dateTime.weekday(.narrow))
-    }
-
-    private var backgroundColor: Color {
-        guard let pollutionLevel else { return Color.white.opacity(0.55) }
-        if pollutionLevel >= 0.8 { return Color.muddyBrown.opacity(0.15) }
-        if pollutionLevel >= 0.4 { return Color.amber.opacity(0.16) }
-        if pollutionLevel > 0 { return Color.tankTeal.opacity(0.14) }
-        return Color.white
-    }
-
-    private var ringColor: Color {
-        guard let pollutionLevel else { return Color.peachFoam }
-        if pollutionLevel >= 0.8 { return Color.muddyBrown.opacity(0.5) }
-        if pollutionLevel >= 0.4 { return Color.amber.opacity(0.55) }
-        return Color.tankTeal.opacity(0.45)
     }
 
     private func faceName(for pollutionLevel: Double) -> String {
@@ -245,14 +224,14 @@ private struct MonthFinnLogView: View {
 
                     ForEach(monthCells.indices, id: \.self) { index in
                         if let date = monthCells[index] {
-                            FinnDayCircle(
+                            FinnDayStatusView(
                                 date: date,
                                 pollutionLevel: pollutionLevel(for: date),
                                 isToday: Calendar.current.isDateInToday(date),
-                                size: 34
+                                imageSize: 44
                             )
                         } else {
-                            Color.clear.frame(height: 48)
+                            Color.clear.frame(height: 60)
                         }
                     }
                 }
