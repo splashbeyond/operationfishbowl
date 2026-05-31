@@ -78,8 +78,15 @@ struct VerifyMVPAcceptance {
         try expect(
             shieldAction.contains("store.markShieldAction()") &&
             shieldAction.contains("store.incrementPollution()") &&
-            shieldAction.contains("startBypassCooldown"),
-            "Shield action must log action, increment murkiness, and start bypass cooldown."
+            shieldAction.contains("startBypassCooldown") &&
+            !shieldAction.contains("UNNotificationRequest"),
+            "Shield action must log action, increment murkiness, start bypass cooldown, and not schedule timer-only notifications."
+        )
+        try expect(
+            monitor.contains("bypassUsageEventName") &&
+            monitor.contains("markBudgetedAppUsedDuringBypass") &&
+            monitor.contains("UNNotificationRequest"),
+            "Bypass notification must be armed only after selected-app usage evidence during bypass."
         )
         try expect(
             settings.contains("Last shield action") &&
@@ -94,9 +101,9 @@ struct VerifyMVPAcceptance {
             "Scheduler must use one daily activity and one budget threshold event."
         )
         try expect(
-            scheduler.contains("threshold: DateComponents(minute: max(1, windowMinutes))") &&
-            !scheduler.contains("DateComponents(second: 30)"),
-            "Bypass cooldown threshold must match the actual bypass window."
+            scheduler.contains("threshold: DateComponents(second: TimeTankConstants.bypassUsageEvidenceSeconds)") &&
+            scheduler.contains("events: [TimeTankConstants.bypassUsageEventName: event]"),
+            "Bypass DeviceActivity event must detect selected-app usage evidence, not drive timer-only notifications."
         )
         try expect(
             budget.contains("[15, 30, 60, 120]") &&

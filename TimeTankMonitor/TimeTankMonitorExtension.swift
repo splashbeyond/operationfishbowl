@@ -1,5 +1,6 @@
 import DeviceActivity
 import Foundation
+import UserNotifications
 
 final class TimeTankMonitorExtension: DeviceActivityMonitor {
     private let store = TimeTankStore()
@@ -27,6 +28,7 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
 
         if activity == TimeTankConstants.bypassActivityName {
             store.clearBypassWindow()
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
             store.recordDiagnostic("Bypass interval ended.", source: "Monitor")
 
             if store.shouldReapplyShield() {
@@ -49,12 +51,29 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
             ScreenTimeShielding.applyShield(for: store.selection)
         }
 
-        if activity == TimeTankConstants.bypassActivityName && event == TimeTankConstants.bypassEventName {
-            store.clearBypassWindow()
-            store.recordDiagnostic("Bypass window threshold reached; reapplying shield.", source: "Monitor")
-            if store.shouldReapplyShield() {
-                ScreenTimeShielding.applyShield(for: store.selection)
-            }
+        if activity == TimeTankConstants.bypassActivityName && event == TimeTankConstants.bypassUsageEventName {
+            store.markBudgetedAppUsedDuringBypass()
+            scheduleBypassExpiryNotificationIfNeeded()
+            store.recordDiagnostic("Budgeted app usage detected during bypass; expiry notification armed.", source: "Monitor")
         }
+    }
+
+    private func scheduleBypassExpiryNotificationIfNeeded() {
+        guard store.isBypassActive(), let expiresAt = store.bypassExpiresAt else { return }
+
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
+
+        let content = UNMutableNotificationContent()
+        content.title = "Bypass ended."
+        content.body = "TimeTank is protecting your distraction budget again."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(
+            timeInterval: max(1, expiresAt.timeIntervalSinceNow),
+            repeats: false
+        )
+        let request = UNNotificationRequest(identifier: "bypass-expiry", content: content, trigger: trigger)
+        center.add(request)
     }
 }

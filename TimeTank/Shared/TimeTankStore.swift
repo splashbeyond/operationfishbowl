@@ -107,6 +107,11 @@ final class TimeTankStore {
         set { defaults.set(max(0, newValue), forKey: TimeTankDefaultsKey.bypassCount) }
     }
 
+    var budgetedAppUsedDuringBypass: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.budgetedAppUsedDuringBypass) }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.budgetedAppUsedDuringBypass) }
+    }
+
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
@@ -175,12 +180,18 @@ final class TimeTankStore {
     func startBypassWindow(windowMinutes: Int, now: Date = Date()) -> Date {
         let expiresAt = Calendar.current.date(byAdding: .minute, value: windowMinutes, to: now) ?? now
         bypassExpiresAt = expiresAt
+        budgetedAppUsedDuringBypass = false
         lastBypassDate = now
         return expiresAt
     }
 
     func clearBypassWindow() {
         bypassExpiresAt = nil
+        budgetedAppUsedDuringBypass = false
+    }
+
+    func markBudgetedAppUsedDuringBypass() {
+        budgetedAppUsedDuringBypass = true
     }
 
     func isBypassActive(now: Date = Date()) -> Bool {
@@ -207,6 +218,7 @@ final class TimeTankStore {
         isBudgetExceededToday = false
         bypassExpiresAt = nil
         bypassCount = 0
+        budgetedAppUsedDuringBypass = false
         defaults.set(todayKey, forKey: TimeTankDefaultsKey.lastCleanEvaluationDay)
     }
 
@@ -220,6 +232,7 @@ final class TimeTankStore {
         lastThresholdDate = nil
         lastShieldActionDate = nil
         bypassCount = 0
+        budgetedAppUsedDuringBypass = false
     }
 
     func recordDiagnostic(_ message: String, source: String, now: Date = Date()) {

@@ -59,11 +59,11 @@ Do not drive MVP pollution from continuously reported overflow minutes. DeviceAc
 ### 6. Shield Reappearance After Bypass (Three Paths)
 **Path A** — Extension scheduling works: `startBypassCooldown()` called from `TimeTankShieldActionExtension` → monitor's `intervalDidEnd` fires → shield reapplied automatically.
 
-**Path B** — User opens TimeTank: `scenePhase.active` → `model.refresh()` → `enforceExpiredBypassIfNeeded()` → schedules bypass cooldown from main app (reliable) + schedules local notification at `bypassExpiresAt`.
+**Path B** — User opens TimeTank: `scenePhase.active` → `model.refresh()` → `enforceExpiredBypassIfNeeded()` → schedules bypass cooldown from main app when needed and cancels pending bypass notifications.
 
-**Path C** — Notification fallback: notification fires at `bypassExpiresAt` → user taps → TimeTank opens → shield immediately reapplied.
+**Path C** — Usage-evidenced notification fallback: during bypass, DeviceActivity watches only the selected app/category/web tokens. If the user accumulates 30 seconds of selected-app activity, TimeTank arms a neutral bypass-expiry notification. If the user opens TimeTank or the shield reapplies, the notification is canceled.
 
-Key fix in `ScreenTimeScheduler.startBypassCooldown`: now uses a single `DeviceActivityCenter` instance and adds a **10-second buffer** to the schedule start time to prevent stale timing when called from extension processes. The bypass threshold matches the selected bypass window so the shield does not reappear early during an active bypass.
+Key fix in `ScreenTimeScheduler.startBypassCooldown`: now uses a single `DeviceActivityCenter` instance and adds a **10-second buffer** to the schedule start time to prevent stale timing when called from extension processes. The bypass interval end controls shield reapply; the bypass event threshold is only 30 seconds of selected-app usage evidence for notification gating.
 
 ### 7. Scene Phase Observer
 Added to `TimeTankApp.swift`:
@@ -113,7 +113,7 @@ Tank pollution thresholds in `FocusTankView.finnFaceName`:
 | `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()` function, event-based 20% threshold and bypass pollution |
 | `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, bypass-window event threshold |
 | `TimeTank/Shared/TimeTankStore.swift` | `startBypassWindow` uses dynamic window from `TimeTankRules` |
-| `TimeTank/App/TimeTankModel.swift` | Scene phase observer, notification scheduling, `enforceExpiredBypassIfNeeded` improvements |
+| `TimeTank/App/TimeTankModel.swift` | Scene phase observer, bypass notification cancellation, `enforceExpiredBypassIfNeeded` improvements |
 | `TimeTank/App/TimeTankApp.swift` | `scenePhase.active` → `model.refresh()` |
 | `TimeTank/App/FocusTankView.swift` | Updated pollution thresholds, new Finn face mapping |
 | `TimeTank/Resources/Assets.xcassets/` | All Finn PNGs + AppIcon replaced with new artwork |
@@ -123,7 +123,7 @@ Tank pollution thresholds in `FocusTankView.finnFaceName`:
 
 ## Known Issues / Not Yet Fixed
 - **Custom shield on first install**: After a fresh install, deleting app + clean build (Cmd+Shift+K) required to register extensions properly. If generic "Restricted" shield shows, this is the fix.
-- **Shield reappearance without opening TimeTank**: If user stays in blocked app and never opens TimeTank, Path A (extension scheduling) must work. Path B and C require at least one TimeTank foreground. This is a ManagedSettings API limitation — `startMonitoring` is unreliable from extension processes.
+- **Shield reappearance without opening TimeTank**: If user stays in blocked app and never opens TimeTank, Path A (extension scheduling) must work. The notification fallback is now conservative and only arms after selected-app usage is detected during bypass. This avoids random timer-only notifications, but means no usage evidence callback equals no notification.
 - **`bypassWindowMinutes` constant** in `TimeTankConstants.swift` is now unused (replaced by `TimeTankRules.bypassWindowMinutes`). Can be cleaned up.
 
 ---
@@ -139,5 +139,5 @@ Tank pollution thresholds in `FocusTankView.finnFaceName`:
 8. Use selected app for 1 min → custom Finn shield appears
 9. Tap "Open Anyway" → stay in app, pollution should jump to 20%
 10. Open TimeTank → verify 20% pollution visible
-11. Go back to blocked app → shield should return in ~1 min (or tap notification)
+11. Stay in or return to the blocked app for at least 30 seconds during bypass, then verify the shield returns in ~1 min or a neutral bypass-ended notification opens TimeTank.
 12. Repeat 4 more times → verify 40% → 60% → 80% → 100% pollution with correct Finn face each time

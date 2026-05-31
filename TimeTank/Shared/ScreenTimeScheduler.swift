@@ -48,13 +48,13 @@ enum ScreenTimeScheduler {
             applications: selection.applicationTokens,
             categories: selection.categoryTokens,
             webDomains: selection.webDomainTokens,
-            threshold: DateComponents(minute: max(1, windowMinutes))
+            threshold: DateComponents(second: TimeTankConstants.bypassUsageEvidenceSeconds)
         )
 
         try center.startMonitoring(
             TimeTankConstants.bypassActivityName,
             during: schedule,
-            events: [TimeTankConstants.bypassEventName: event]
+            events: [TimeTankConstants.bypassUsageEventName: event]
         )
     }
 

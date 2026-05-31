@@ -10,11 +10,12 @@ enum TimeTankConstants {
     static let dailyActivityName = DeviceActivityName("TimeTank.daily.distractions")
     static let budgetEventName = DeviceActivityEvent.Name("TimeTank.event.budgetReached")
     static let bypassActivityName = DeviceActivityName("TimeTank.bypass.cooldown")
-    static let bypassEventName = DeviceActivityEvent.Name("TimeTank.event.bypassEnded")
+    static let bypassUsageEventName = DeviceActivityEvent.Name("TimeTank.event.bypassUsageDetected")
     static let reportContextIdentifier = "TimeTank.usage.summary"
     static let allAppsReportContextIdentifier = "TimeTank.usage.all"
 
     static let defaultBudgetMinutes = 45
+    static let bypassUsageEvidenceSeconds = 30
     static let pollutionIncrement = TimeTankRules.bypassPollutionIncrement
 }
 
@@ -38,4 +39,5 @@ enum TimeTankDefaultsKey {
     static let lastShieldClearDate = "lastShieldClearDate"
     static let lastShieldActionDate = "lastShieldActionDate"
     static let bypassCount = "bypassCount"
+    static let budgetedAppUsedDuringBypass = "budgetedAppUsedDuringBypass"
 }

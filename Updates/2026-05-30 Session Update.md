@@ -15,7 +15,7 @@ This session completed the core bypass loop for TimeTank. The major themes were:
 3. Escalating bypass windows that increase over the day
 4. Shield reappearance after bypass (the hardest problem)
 5. Finn tap-to-reapply as a user-facing override
-6. Notifications that fire at bypass expiry and deep-link back to the tank
+6. Usage-evidenced notifications that fire at bypass expiry and deep-link back to the tank
 7. All new Finn mascot artwork added throughout the app
 
 ---
@@ -75,7 +75,7 @@ This was the hardest problem. `DeviceActivityCenter.startMonitoring` is unreliab
 
 **Path B — App foreground fallback:** Every time the user opens TimeTank, `scenePhase.active` triggers `model.refresh()` → `enforceExpiredBypassIfNeeded()`. If the bypass has expired and no active DeviceActivity is running, it reschedules from the main app process (which is reliable) and reapplies the shield directly.
 
-**Path C — Notification fallback:** A local notification fires at `bypassExpiresAt`. User taps it, TimeTank opens, shield reapplied immediately via Path B.
+**Path C — Usage-evidenced notification fallback:** During bypass, DeviceActivity watches only the selected app/category/web tokens. If the user accumulates 30 seconds of selected-app activity, a neutral notification is armed for `bypassExpiresAt`. User taps it, TimeTank opens, shield reapplied immediately via Path B. If they leave the selected app bucket, no timer-only notification should fire.
 
 Key fix: `ScreenTimeScheduler.startBypassCooldown` now uses a **single** `DeviceActivityCenter` instance, a 10-second start buffer, and a threshold matching the actual bypass window so the shield does not reappear early.
 
@@ -93,23 +93,19 @@ Implemented in `FocusTankView` with `onFinnTap` closure wired in `TankDashboardV
 
 ---
 
-### Finn Notification Copy — Escalating by Pollution Level
-Notifications fire at bypass expiry with copy that gets increasingly urgent:
+### Neutral Bypass Notification Copy
+Notifications only arm after selected-app usage is detected during bypass. The copy stays neutral because TimeTank cannot perfectly prove foreground app state at delivery time:
 
-| Pollution | Title | Body |
-|-----------|-------|------|
-| 0–20% | "Check in on Finn!" | He noticed you're spending time on this app. He wants to see you. |
-| 20–40% | "Finn misses you." | The tank is getting a little murky. Come check on him. |
-| 40–60% | "Finn is worried." | The water's clouding up and he's waiting for you. |
-| 60–80% | "Finn really needs you." | The tank is getting bad. He can't hold on much longer. |
-| 80%+ | "Finn is suffering." | The water is almost gone. Please come back to him. |
+| Title | Body |
+|-------|------|
+| "Bypass ended." | "TimeTank is protecting your distraction budget again." |
 
 Tapping the notification deep-links to the Tank tab via `NotificationCenter.default.post(name: .openTankTab)`.
 
 ---
 
-### Notifications Now Send Reliably
-Previously `scheduleBypassExpiryNotification` was only called when the user opened TimeTank. It is now called directly inside `TimeTankShieldActionExtension` the moment "Open Anyway" is tapped — so the notification is always scheduled at bypass start, regardless of whether the user ever opens TimeTank again.
+### Notifications Are Usage-Evidenced
+The shield action extension no longer schedules a timer-only notification at "Open Anyway." Instead, the bypass DeviceActivity event watches selected app/category/web tokens and only arms the expiry notification after 30 seconds of selected-app activity during the bypass.
 
 ---
 
@@ -138,13 +134,14 @@ Original image was 4096×6144 portrait with black bars. Detected content bounds,
 
 | File | What Changed |
 |------|-------------|
-| `TimeTankShieldAction/TimeTankShieldActionExtension.swift` | Immediate bypass count, `.none` completion, escalating window calc, notification scheduling |
+| `TimeTankShieldAction/TimeTankShieldActionExtension.swift` | Immediate bypass count, `.none` completion, escalating window calc |
+| `TimeTankMonitor/TimeTankMonitorExtension.swift` | Usage-evidenced bypass notification arming and shield reapply at interval end |
 | `TimeTankShieldConfiguration/TimeTankShieldConfigurationExtension.swift` | Updated thresholds, correct Finn faces |
 | `TimeTankShieldConfiguration/ShieldAssets.xcassets/` | Finn images resized to 400×400 |
 | `TimeTank/Shared/TimeTankRules.swift` | `bypassWindowMinutes()`, event-based 20% threshold and bypass pollution |
 | `TimeTank/Shared/ScreenTimeScheduler.swift` | Single center instance, 10s start buffer, bypass-window event threshold |
 | `TimeTank/Shared/TimeTankStore.swift` | `startBypassWindow` takes explicit window parameter |
-| `TimeTank/App/TimeTankModel.swift` | Notification scheduling, `enforceExpiredBypassIfNeeded`, notification permission request |
+| `TimeTank/App/TimeTankModel.swift` | Notification cancellation, `enforceExpiredBypassIfNeeded`, notification permission request |
 | `TimeTank/App/TimeTankApp.swift` | `scenePhase.active` refresh, deep-link handler, `AppDelegate` with `UNUserNotificationCenterDelegate` |
 | `TimeTank/App/RootView.swift` | `selectedTab` moved to `TimeTankApp`, binding passed in |
 | `TimeTank/App/FocusTankView.swift` | Finn tap handler, haptic, animation, updated face thresholds |
@@ -156,7 +153,7 @@ Original image was 4096×6144 portrait with black bars. Detected content bounds,
 
 ## Known Limitations
 
-- **Shield without opening TimeTank:** Path A (extension scheduling) has to work for the shield to return automatically. Paths B and C require the user to open TimeTank or tap a notification. This is a ManagedSettings API constraint — `startMonitoring` is not reliable from extension processes.
+- **Shield without opening TimeTank:** Path A (extension scheduling) has to work for the shield to return automatically. Path C only fires if DeviceActivity detects selected-app usage during bypass, so no usage evidence callback means no notification. This is more conservative and avoids random timer-only pings.
 - **`bypassWindowMinutes` constant in `TimeTankConstants.swift`** is now unused. Can be deleted in a cleanup pass.
 - **Custom shield on first fresh install** — delete app + clean build (Cmd+Shift+K) required to register extensions properly with iOS.
 
@@ -172,7 +169,7 @@ Original image was 4096×6144 portrait with black bars. Detected content bounds,
 6. Use selected app for 1 min → custom Finn shield appears (should show FinnMascotWorried)
 7. Tap "Open Anyway" → stay in app, pollution should jump to 20%
 8. Open TimeTank → verify 20% pollution visible, FinnMascotAlert face
-9. Go back to blocked app → shield should return in ~1 min (or tap notification)
+9. Stay in or return to the blocked app for at least 30 seconds during bypass → shield should return in ~1 min, or a neutral notification should open TimeTank if automatic re-shielding is delayed
 10. Repeat 4 more times → 40% → 60% → 80% → 100%, Finn face changes each time
 11. At 100%, tap Finn — verify nothing happens (disabled at full pollution)
-12. Tap bypass notification → verify it opens TimeTank on the Tank tab
+12. Tap bypass notification, if one fired → verify it opens TimeTank on the Tank tab

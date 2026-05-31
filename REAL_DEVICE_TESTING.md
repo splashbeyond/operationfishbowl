@@ -46,9 +46,12 @@ The `mvp` branch also has a GitHub Actions workflow at `.github/workflows/mvp.ym
 4. Confirm the shield appears immediately.
 5. Tap the shield secondary action to bypass.
 6. Confirm diagnostics show:
-   - `Secondary shield button tapped; bypass started.`
-   - `Bypass cooldown monitoring started.`
-7. Wait for the bypass window to end and confirm the shield reapplies.
+   - `Secondary shield button tapped; bypass counted and window started.`
+   - `Bypass interval started.`
+7. Stay in or return to the selected app for at least 30 seconds during the bypass.
+8. Confirm diagnostics show:
+   - `Budgeted app usage detected during bypass; expiry notification armed.`
+9. Wait for the bypass window to end and confirm the shield reapplies. If iOS delays the shield while the selected app remains foregrounded, confirm the neutral bypass-ended notification opens TimeTank.
 
 ## Usage Report Test
 

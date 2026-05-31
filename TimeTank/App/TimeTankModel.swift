@@ -199,6 +199,7 @@ final class TimeTankModel {
     func stopMonitoring() {
         ScreenTimeScheduler.stopMonitoring()
         ScreenTimeShielding.clearShield()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
         store.isBudgetExceededToday = false
         store.clearBypassWindow()
         store.isMonitoringEnabled = false
@@ -269,6 +270,7 @@ final class TimeTankModel {
     func clearShieldForDeviceTest() {
         ScreenTimeShielding.clearShield()
         store.clearBypassWindow()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
         statusMessage = "Manual shield cleared."
         store.recordDiagnostic("Manual shield cleared from Settings.", source: "App")
         refresh()
@@ -348,6 +350,8 @@ final class TimeTankModel {
     }
 
     private func enforceExpiredBypassIfNeeded() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
+
         if store.isBypassActive(), store.isMonitoringEnabled, store.hasSelection {
             let activities = DeviceActivityCenter().activities
             if !activities.contains(TimeTankConstants.bypassActivityName) {
@@ -357,7 +361,6 @@ final class TimeTankModel {
                         let startNow = Date()
                         let windowMinutes = TimeTankRules.bypassWindowMinutes(bypassCount: store.bypassCount, budgetMinutes: store.dailyBudgetMinutes)
                         try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: startNow)
-                        scheduleBypassExpiryNotification(at: expiresAt)
                         store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
                     }
                 }
@@ -367,57 +370,7 @@ final class TimeTankModel {
         guard store.isMonitoringEnabled, store.shouldReapplyShield() else { return }
         ScreenTimeShielding.applyShield(for: store.selection)
         store.clearBypassWindow()
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
         store.recordDiagnostic("Expired bypass recovered from app foreground.", source: "App")
-    }
-
-    private func scheduleBypassExpiryNotification(at date: Date) {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])
-
-        let content = UNMutableNotificationContent()
-        let (title, body) = finnNotificationCopy(for: store.pollutionLevel)
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(
-            timeInterval: max(1, date.timeIntervalSinceNow),
-            repeats: false
-        )
-
-        let request = UNNotificationRequest(identifier: "bypass-expiry", content: content, trigger: trigger)
-        center.add(request)
-    }
-
-    private func finnNotificationCopy(for pollution: Double) -> (String, String) {
-        switch pollution {
-        case 0..<0.2:
-            return (
-                "Check in on Finn!",
-                "He noticed you're spending time on this app. He wants to see you."
-            )
-        case 0.2..<0.4:
-            return (
-                "Finn misses you.",
-                "The tank is getting a little murky. Come check on him."
-            )
-        case 0.4..<0.6:
-            return (
-                "Finn is worried.",
-                "The water's clouding up and he's waiting for you."
-            )
-        case 0.6..<0.8:
-            return (
-                "Finn really needs you.",
-                "The tank is getting bad. He can't hold on much longer."
-            )
-        default:
-            return (
-                "Finn is suffering.",
-                "The water is almost gone. Please come back to him."
-            )
-        }
     }
 
     func requestNotificationPermission() {
