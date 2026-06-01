@@ -31,6 +31,7 @@ final class TimeTankModel {
     var appearanceMode: TimeTankAppearanceMode
     var isBudgetLockedForToday: Bool
     var hasBudgetBeenSet: Bool
+    var isInstallDaySchedule: Bool
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -67,6 +68,7 @@ final class TimeTankModel {
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         hasCompletedFirstSetup = store.hasCompletedFirstSetup
+        isInstallDaySchedule = store.isInstallDaySchedule
         enforceExpiredBypassIfNeeded()
         autoRestartMonitoringIfNeeded()
     }
@@ -268,6 +270,7 @@ final class TimeTankModel {
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
         hasCompletedFirstSetup = store.hasCompletedFirstSetup
+        isInstallDaySchedule = store.isInstallDaySchedule
         pollutionLevel = store.pollutionLevel
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots

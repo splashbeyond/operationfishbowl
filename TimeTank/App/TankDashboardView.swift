@@ -72,6 +72,9 @@ struct TankDashboardView: View {
             .onChange(of: model.budgetTrackingStartDate) { _, _ in
                 refreshBudgetTracker()
             }
+            .onChange(of: model.isInstallDaySchedule) { _, _ in
+                refreshBudgetTracker()
+            }
             .onReceive(budgetTrackerTimer) { _ in
                 refreshBudgetTracker()
             }
@@ -163,9 +166,13 @@ struct TankDashboardView: View {
                 }
 
                 if model.hasSelection {
-                    DeviceActivityReport(budgetTrackerContext, filter: budgetTrackerFilter)
-                        .id(budgetTrackerRefreshID)
-                        .frame(minHeight: 124)
+                    if model.isInstallDaySchedule {
+                        installDayBudgetView
+                    } else {
+                        DeviceActivityReport(budgetTrackerContext, filter: budgetTrackerFilter)
+                            .id(budgetTrackerRefreshID)
+                            .frame(minHeight: 124)
+                    }
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
@@ -179,6 +186,33 @@ struct TankDashboardView: View {
                 }
             }
         }
+    }
+
+    private var installDayBudgetView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if model.isBudgetExceededToday {
+                Text("0m left")
+                    .font(.timeTankMetric(42))
+                    .foregroundStyle(Color.muddyBrown)
+                Text("Budget spent.")
+                    .font(.timeTankBody(14))
+                    .foregroundStyle(Color.textMuted)
+            } else {
+                Text(TimeTankModel.durationLabel(for: model.dailyBudgetMinutes))
+                    .font(.timeTankMetric(42))
+                    .foregroundStyle(Color.tankTeal)
+                Text("Finn is counting from when you started. Stats reset at midnight.")
+                    .font(.timeTankBody(14))
+                    .foregroundStyle(Color.textMuted)
+            }
+            if let start = model.budgetTrackingStartDate {
+                Text("Tracking since \(start.formatted(date: .omitted, time: .shortened))")
+                    .font(.timeTankBody(13))
+                    .foregroundStyle(Color.textMuted.opacity(0.7))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
     }
 
     private var setupCard: some View {
