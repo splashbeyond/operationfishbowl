@@ -69,6 +69,9 @@ struct TankDashboardView: View {
                 syncSetupState()
                 refreshBudgetTracker()
             }
+            .onChange(of: model.budgetTrackingStartDate) { _, _ in
+                refreshBudgetTracker()
+            }
             .onReceive(budgetTrackerTimer) { _ in
                 refreshBudgetTracker()
             }

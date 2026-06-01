@@ -10,6 +10,7 @@
 		100000000000000000000001 /* TimeTankApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* TimeTankApp.swift */; };
 		100000000000000000000002 /* TimeTankModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* TimeTankModel.swift */; };
 		100000000000000000000003 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* RootView.swift */; };
+		100000000000000000000026 /* FirstSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000020 /* FirstSetupView.swift */; };
 		100000000000000000000004 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* DesignSystem.swift */; };
 		100000000000000000000005 /* TankDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* TankDashboardView.swift */; };
 		100000000000000000000006 /* FocusTankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* FocusTankView.swift */; };
@@ -139,6 +140,7 @@
 		20000000000000000000001D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		20000000000000000000001E /* TimeTankReport.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TimeTankReport.entitlements; sourceTree = "<group>"; };
 		20000000000000000000001F /* TimeTankRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeTankRules.swift; sourceTree = "<group>"; };
+		200000000000000000000020 /* FirstSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstSetupView.swift; sourceTree = "<group>"; };
 		200000000000000000000100 /* TimeTank.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeTank.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000101 /* TimeTankMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		200000000000000000000102 /* TimeTankShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TimeTankShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -264,6 +266,7 @@
 				200000000000000000000009 /* CurrentsView.swift */,
 				20000000000000000000000A /* SettingsView.swift */,
 				20000000000000000000001B /* OnboardingView.swift */,
+				200000000000000000000020 /* FirstSetupView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -574,6 +577,7 @@
 				100000000000000000000009 /* CurrentsView.swift in Sources */,
 				10000000000000000000000A /* SettingsView.swift in Sources */,
 				10000000000000000000001E /* OnboardingView.swift in Sources */,
+				100000000000000000000026 /* FirstSetupView.swift in Sources */,
 				100000000000000000000022 /* TimeTankRules.swift in Sources */,
 				10000000000000000000000C /* TimeTankConstants.swift in Sources */,
 				10000000000000000000000D /* TimeTankStore.swift in Sources */,

@@ -103,6 +103,18 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.hasSeenOnboarding) }
     }
 
+    var hasCompletedFirstSetup: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.hasCompletedFirstSetup) }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.hasCompletedFirstSetup) }
+    }
+
+    // True while the install-day non-repeating schedule is active.
+    // The monitor extension clears this and restarts a midnight-repeating schedule at 23:59.
+    var isInstallDaySchedule: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.isInstallDaySchedule) }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.isInstallDaySchedule) }
+    }
+
     var simulatorDemoSelectionEnabled: Bool {
         get { defaults.bool(forKey: TimeTankDefaultsKey.simulatorDemoSelectionEnabled) }
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.simulatorDemoSelectionEnabled) }

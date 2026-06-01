@@ -72,31 +72,22 @@ struct TimeTankSmallWidgetView: View {
     let entry: TimeTankWidgetEntry
 
     var body: some View {
-        VStack(spacing: 4) {
-            Spacer(minLength: 0)
-
+        ZStack(alignment: .bottom) {
             Image(widgetFinnFaceName(for: entry.pollutionLevel))
                 .resizable()
                 .scaledToFit()
-                .frame(width: 92, height: 98)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .shadow(color: .black.opacity(0.28), radius: 4, y: 2)
 
             Text("\(widgetPercent(for: entry.pollutionLevel))%")
-                .font(.system(size: 28, weight: .black, design: .rounded))
+                .font(.system(size: 24, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.7), radius: 6, y: 1)
                 .monospacedDigit()
                 .lineLimit(1)
-
-            Text(widgetStatusShort(for: entry.pollutionLevel).uppercased())
-                .font(.system(size: 10, weight: .heavy, design: .rounded))
-                .foregroundStyle(widgetPollutionColor(for: entry.pollutionLevel))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-
-            Spacer(minLength: 0)
+                .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(6)
         .unredacted()
     }
 }
@@ -105,11 +96,11 @@ struct TimeTankMediumWidgetView: View {
     let entry: TimeTankWidgetEntry
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Image(widgetFinnFaceName(for: entry.pollutionLevel))
                 .resizable()
                 .scaledToFit()
-                .frame(width: 112, height: 112)
+                .frame(maxHeight: .infinity)
                 .shadow(color: .black.opacity(0.35), radius: 7, y: 4)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -134,7 +125,8 @@ struct TimeTankMediumWidgetView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
         .unredacted()
     }
 }
@@ -143,18 +135,15 @@ struct TimeTankLargeFinnWidgetView: View {
     let entry: TimeTankWidgetEntry
 
     var body: some View {
-        VStack(spacing: 10) {
-            Spacer(minLength: 0)
-
+        VStack(spacing: 6) {
             Image(widgetFinnFaceName(for: entry.pollutionLevel))
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 230, maxHeight: 245)
+                .frame(maxWidth: .infinity)
+                .layoutPriority(1)
                 .shadow(color: .black.opacity(0.38), radius: 10, y: 6)
 
-            Spacer(minLength: 0)
-
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
                 Text("\(widgetPercent(for: entry.pollutionLevel))%")
                     .font(.system(size: 54, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
@@ -162,7 +151,7 @@ struct TimeTankLargeFinnWidgetView: View {
                     .lineLimit(1)
 
                 Text(widgetStatusTitle(for: entry.pollutionLevel))
-                    .font(.system(size: 23, weight: .black, design: .rounded))
+                    .font(.system(size: 21, weight: .black, design: .rounded))
                     .foregroundStyle(widgetPollutionColor(for: entry.pollutionLevel))
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
@@ -177,7 +166,7 @@ struct TimeTankLargeFinnWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(18)
+        .padding(14)
         .unredacted()
     }
 }
@@ -308,7 +297,7 @@ private func widgetStatusLong(for entry: TimeTankWidgetEntry) -> String {
     if pollution <= 0.01 { return "Keep the water clean today." }
     if pollution < 0.2 { return "A little cloudy, but Finn is okay." }
     if pollution < 0.4 { return "Slow down before the tank clouds up." }
-    if pollution < 0.8 { return "Finn needs a break from the phone." }
+    if pollution < 0.8 { return "Finn needs a break from the device." }
     if pollution < 1.0 { return "Protect the rest of today." }
     return "Tomorrow resets the tank."
 }

@@ -41,6 +41,40 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
         super.intervalDidEnd(for: activity)
         store.recordDiagnostic("intervalDidEnd: \(activity.rawValue)", source: "Monitor")
 
+        if activity == TimeTankConstants.dailyActivityName && store.isInstallDaySchedule {
+            // The install-day non-repeating schedule just ended at 23:59.
+            // Switch to the normal midnight-repeating schedule so every subsequent day
+            // counts usage from midnight, not from install time.
+            store.isInstallDaySchedule = false
+            let selection = store.selection
+            let tokenCount = selection.applicationTokens.count
+                + selection.categoryTokens.count
+                + selection.webDomainTokens.count
+            guard tokenCount > 0 else {
+                store.recordDiagnostic("Install-day schedule ended — 0 tokens, skipping restart.", source: "Monitor")
+                return
+            }
+            let center = DeviceActivityCenter()
+            let schedule = DeviceActivitySchedule(
+                intervalStart: DateComponents(hour: 0, minute: 0),
+                intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
+                repeats: true
+            )
+            let event = DeviceActivityEvent(
+                applications: selection.applicationTokens,
+                categories: selection.categoryTokens,
+                webDomains: selection.webDomainTokens,
+                threshold: DateComponents(minute: max(1, store.dailyBudgetMinutes))
+            )
+            try? center.startMonitoring(
+                TimeTankConstants.dailyActivityName,
+                during: schedule,
+                events: [TimeTankConstants.budgetEventName: event]
+            )
+            store.recordDiagnostic("Install-day schedule ended — restarted midnight-repeating schedule.", source: "Monitor")
+            return
+        }
+
         if activity == TimeTankConstants.bypassActivityName {
             store.clearBypassWindow()
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["bypass-expiry"])

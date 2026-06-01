@@ -13,6 +13,7 @@ final class TimeTankModel {
     var currentsBalance: Int
     var isAuthorized: Bool
     var hasSeenOnboarding: Bool
+    var hasCompletedFirstSetup: Bool
     var isMonitoringEnabled: Bool
     var isBudgetExceededToday: Bool
     var bypassExpiresAt: Date?
@@ -65,6 +66,7 @@ final class TimeTankModel {
         isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
+        hasCompletedFirstSetup = store.hasCompletedFirstSetup
         enforceExpiredBypassIfNeeded()
         autoRestartMonitoringIfNeeded()
     }
@@ -124,6 +126,18 @@ final class TimeTankModel {
     func completeOnboarding() {
         hasSeenOnboarding = true
         store.hasSeenOnboarding = true
+    }
+
+    func completeFirstSetup() {
+        hasCompletedFirstSetup = true
+        store.hasCompletedFirstSetup = true
+        // Guarantee tracking starts from this moment so pre-install usage is never counted.
+        // Only sets if nil — startMonitoring() may have already set it to an earlier time today.
+        if budgetTrackingStartDate == nil {
+            let now = Date()
+            budgetTrackingStartDate = now
+            store.budgetTrackingStartDate = now
+        }
     }
 
     func saveSelection(_ newSelection: FamilyActivitySelection) {
@@ -208,7 +222,11 @@ final class TimeTankModel {
             guard appCount + catCount + webCount > 0 else {
                 throw NSError(domain: "TimeTank", code: 1, userInfo: [NSLocalizedDescriptionKey: "Selection has no tokens — pick at least one app."])
             }
-            try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes)
+            // First install: budgetTrackingStartDate is nil, meaning monitoring has never run.
+            // Start the schedule from NOW so pre-install usage never counts toward the threshold.
+            let isFirstInstall = store.budgetTrackingStartDate == nil
+            store.isInstallDaySchedule = isFirstInstall
+            try ScreenTimeScheduler.startDailyMonitoring(selection: selection, budgetMinutes: dailyBudgetMinutes, startFromNow: isFirstInstall)
             store.markMonitoringStarted()
             isMonitoringEnabled = true
             scheduleError = nil
@@ -249,6 +267,7 @@ final class TimeTankModel {
         isAuthorized = AuthorizationCenter.shared.authorizationStatus == .approved
         #endif
         hasSeenOnboarding = store.hasSeenOnboarding
+        hasCompletedFirstSetup = store.hasCompletedFirstSetup
         pollutionLevel = store.pollutionLevel
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots

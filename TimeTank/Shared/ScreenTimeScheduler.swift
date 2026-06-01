@@ -3,16 +3,32 @@ import FamilyControls
 import Foundation
 
 enum ScreenTimeScheduler {
-    static func startDailyMonitoring(selection: FamilyActivitySelection, budgetMinutes: Int) throws {
+    // startFromNow = true on first install: creates a non-repeating schedule that begins
+    // at the current time so pre-install usage never counts against the budget.
+    // The monitor extension's intervalDidEnd restarts with the normal midnight schedule at 23:59.
+    static func startDailyMonitoring(selection: FamilyActivitySelection, budgetMinutes: Int, startFromNow: Bool = false) throws {
         let center = DeviceActivityCenter()
         // Always stop first — re-calling startMonitoring on an active name is a no-op on some OS
         // versions and an error on others; stopping guarantees a clean slate with the new threshold.
         center.stopMonitoring([TimeTankConstants.dailyActivityName])
 
+        let intervalStart: DateComponents
+        let repeats: Bool
+
+        if startFromNow {
+            // Start 5 seconds ahead so the schedule isn't stale by the time the OS registers it.
+            let buffered = Calendar.current.date(byAdding: .second, value: 5, to: Date()) ?? Date()
+            intervalStart = Calendar.current.dateComponents([.hour, .minute, .second], from: buffered)
+            repeats = false
+        } else {
+            intervalStart = DateComponents(hour: 0, minute: 0)
+            repeats = true
+        }
+
         let schedule = DeviceActivitySchedule(
-            intervalStart: DateComponents(hour: 0, minute: 0),
+            intervalStart: intervalStart,
             intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
-            repeats: true
+            repeats: repeats
         )
 
         let event = DeviceActivityEvent(

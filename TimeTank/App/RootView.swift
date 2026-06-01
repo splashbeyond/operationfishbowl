@@ -39,6 +39,13 @@ struct RootView: View {
         }
         .tint(.tideOrange)
         .background(Color.warmWhite)
+        .fullScreenCover(isPresented: Binding(
+            get: { !model.hasCompletedFirstSetup },
+            set: { _ in }
+        )) {
+            FirstSetupView()
+                .environment(model)
+        }
     }
 }
 

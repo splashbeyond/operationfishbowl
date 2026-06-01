@@ -44,8 +44,10 @@ struct OnboardingView: View {
     @State private var chainBroken = false
     @State private var commitmentScale: CGFloat = 1
     @State private var paywallBob = false
+    @State private var bypassDemoLevel: Double = 0.18
+    @State private var bypassDemoCount: Int = 0
 
-    private let paywallStep = 23
+    private let paywallStep = 25
 
     private let goalOptions: [OnboardingOption] = [
         .init(id: "focus", emoji: "🧘", title: "Improve focus"),
@@ -106,10 +108,12 @@ struct OnboardingView: View {
         case 16: reviewScreen
         case 17: connectScreenTimeScreen
         case 18: notificationsScreen
-        case 19: bypassesScreen
-        case 20: widgetsScreen
-        case 21: commitmentScreen
-        case 22: beforeAfterScreen
+        case 19: bypassOverLimitScreen
+        case 20: bypassMurkScreen
+        case 21: shieldScreen
+        case 22: widgetsScreen
+        case 23: commitmentScreen
+        case 24: beforeAfterScreen
         default: paywallScreen
         }
     }
@@ -169,7 +173,7 @@ struct OnboardingView: View {
             Text("Meet Finn.")
                 .font(.timeTankTitle(30))
                 .foregroundStyle(Color.textDark)
-            Text("He lives in your tank. Your phone is his world.")
+            Text("He lives in your tank. Your device is his world.")
                 .font(.timeTankBody(17))
                 .foregroundStyle(Color.textMuted)
                 .multilineTextAlignment(.center)
@@ -503,7 +507,7 @@ struct OnboardingView: View {
             Text("\(yearsLost) years")
                 .font(.timeTankMetric(64))
                 .foregroundStyle(Color.muddyBrown)
-            Text("of your life scrolling on this phone")
+            Text("of your life scrolling on this device")
                 .font(.timeTankBody(18))
                 .foregroundStyle(Color.textMuted)
                 .multilineTextAlignment(.center)
@@ -543,7 +547,7 @@ struct OnboardingView: View {
             Spacer().frame(height: 16)
             HStack(spacing: 18) {
                 legendDot(Color.textMuted.opacity(0.35), "Life remaining")
-                legendDot(Color.tideOrange, "\(yearsLost) years on your phone")
+                legendDot(Color.tideOrange, "\(yearsLost) years on your device")
             }
             .padding(.horizontal, 20)
 
@@ -726,24 +730,13 @@ struct OnboardingView: View {
     private var connectScreenTimeScreen: some View {
         VStack(spacing: 0) {
             Spacer().frame(height: 80)
-            ZStack {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.cardBackground)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(Color.peachFoam, lineWidth: 1)
-                        }
-                    Image(systemName: "hourglass")
-                        .font(.system(size: 44, weight: .semibold))
-                        .foregroundStyle(Color.tideOrange)
-                        .symbolRenderingMode(.monochrome)
-                        .frame(width: 72, height: 72, alignment: .center)
-                        .offset(x: -1)
-                }
-                .frame(width: 72, height: 72)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
+            Image(uiImage: UIImage(named: "AppIcon") ?? UIImage())
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .shadow(color: Color.tideOrange.opacity(0.35), radius: 12, y: 4)
+                .frame(maxWidth: .infinity, alignment: .center)
             Spacer().frame(height: 28)
             Text("Connect TimeTank to Screen Time")
                 .font(.timeTankTitle(26))
@@ -823,54 +816,226 @@ struct OnboardingView: View {
         }
     }
 
-    private var bypassesScreen: some View {
+    private var bypassOverLimitScreen: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 64)
-            Text("Bypasses are a safety valve.")
-                .font(.timeTankTitle(26))
+            Spacer().frame(height: 60)
+            Image("FinnMascotDistressed")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 160, height: 160)
+            Spacer().frame(height: 18)
+            Text("Going past your limit\nmakes Finn sad.")
+                .font(.timeTankTitle(28))
                 .foregroundStyle(Color.textDark)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 26)
-            Text("If you really need an app after your budget is spent, you can unlock it briefly. Each bypass makes the tank murkier.")
+                .padding(.horizontal, 28)
+            Spacer().frame(height: 14)
+            Text("Your budget is Finn's clean water. Every extra minute past it pours mud into his bowl — the more you go over, the cloudier his world gets.")
                 .font(.timeTankBody(16))
                 .foregroundStyle(Color.textMuted)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
-                .padding(.top, 8)
                 .padding(.horizontal, 30)
+            Spacer().frame(height: 22)
+            FocusTankView(pollutionLevel: 0.48)
+                .frame(width: 165, height: 165)
+            Spacer().frame(height: 8)
+            Text("What 48% murky looks like for Finn.")
+                .font(.timeTankBody(12).italic())
+                .foregroundStyle(Color.textMuted)
+            Spacer()
+            PrimaryButton(title: "I see it", systemImage: "arrow.right") { advance() }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 50)
+        }
+        .onAppear { OnboardingHaptics.impact(.heavy) }
+    }
 
-            Spacer().frame(height: 18)
+    private var bypassMurkScreen: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 80)
+            Text("Bypasses let you back in.")
+                .font(.timeTankTitle(26))
+                .foregroundStyle(Color.textDark)
+                .multilineTextAlignment(.center)
+            Text("But every one makes it worse. Tap to see.")
+                .font(.timeTankBody(16))
+                .foregroundStyle(Color.textMuted)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+                .padding(.horizontal, 32)
+
+            Spacer().frame(height: 8)
+            ZStack(alignment: .topTrailing) {
+                FocusTankView(pollutionLevel: bypassDemoLevel)
+                    .frame(width: 155, height: 155)
+                Image(bypassDemoFinnImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 44, height: 44)
+                    .padding(4)
+                    .background(Color.cardBackground)
+                    .clipShape(Circle())
+                    .overlay { Circle().stroke(Color.peachFoam, lineWidth: 1) }
+                    .offset(x: 10, y: -6)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: bypassDemoCount)
+            }
+
+            Spacer().frame(height: 6)
+            Text(bypassDemoStatusLabel)
+                .font(.timeTankHeading(15))
+                .foregroundStyle(bypassDemoCount == 0 ? Color.tankTeal : Color.tideOrange)
+                .multilineTextAlignment(.center)
+                .animation(.easeInOut(duration: 0.3), value: bypassDemoCount)
+
+            Spacer().frame(height: 10)
+            Button {
+                guard bypassDemoCount < 4 else { return }
+                OnboardingHaptics.impact(.heavy)
+                bypassDemoCount += 1
+                withAnimation(.easeInOut(duration: 0.7)) {
+                    bypassDemoLevel = min(1.0, bypassDemoLevel + 0.2)
+                }
+            } label: {
+                let exhausted = bypassDemoCount >= 4
+                HStack(spacing: 10) {
+                    Image(systemName: exhausted ? "exclamationmark.triangle.fill" : "lock.open.fill")
+                        .font(.system(size: 15, weight: .bold))
+                    Text(exhausted ? "Finn can barely breathe" : "Use bypass \(bypassDemoCount + 1)")
+                        .font(.timeTankButton())
+                }
+                .foregroundStyle(exhausted ? Color.white : Color.tideOrange)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(exhausted ? Color.muddyBrown : Color.tideOrange.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(exhausted ? Color.clear : Color.tideOrange.opacity(0.32), lineWidth: 1.2)
+                }
+                .animation(.easeInOut(duration: 0.3), value: bypassDemoCount)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+
+            Spacer().frame(height: 10)
             TimeTankCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    labelText("EXAMPLE")
-                    bypassScheduleRow(time: "3:00", title: "Budget runs out", detail: "The shield appears.")
-                    bypassScheduleRow(time: "3:02", title: "You start a bypass", detail: "Apps open briefly. Finn's water gets murkier.")
-                    bypassScheduleRow(time: "3:12", title: "Bypass ends", detail: "The shield comes back automatically.")
+                VStack(alignment: .leading, spacing: 10) {
+                    labelText("HOW LONG EACH BYPASS WINDOW LASTS")
+                    bypassWindowRow(label: "1st bypass", minutes: 5, active: bypassDemoCount == 1)
+                    bypassWindowRow(label: "2nd bypass", minutes: 10, active: bypassDemoCount == 2)
+                    bypassWindowRow(label: "3rd bypass", minutes: 15, active: bypassDemoCount == 3)
+                    bypassWindowRow(label: "4th bypass+", minutes: 30, active: bypassDemoCount >= 4)
+                    Text("Shield returns automatically when the window closes.")
+                        .font(.timeTankBody(12))
+                        .foregroundStyle(Color.textMuted)
+                        .lineSpacing(2)
+                        .padding(.top, 2)
                 }
             }
             .padding(.horizontal, 20)
 
-            Spacer().frame(height: 16)
-            HStack(spacing: 14) {
-                FocusTankView(pollutionLevel: 0.25)
-                    .frame(width: 112, height: 112)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Every bypass is visible.")
-                        .font(.timeTankHeading(17))
-                        .foregroundStyle(Color.textDark)
-                    Text("It is not a punishment. It is feedback you can feel and see.")
-                        .font(.timeTankBody(14))
-                        .foregroundStyle(Color.textMuted)
-                        .lineSpacing(3)
-                }
-            }
-            .padding(.horizontal, 22)
-
             Spacer()
-            PrimaryButton(title: "Continue", systemImage: "shield.lefthalf.filled") { advance() }
+            PrimaryButton(title: "I understand", systemImage: "checkmark") { advance() }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 50)
         }
+        .onAppear {
+            bypassDemoLevel = 0.18
+            bypassDemoCount = 0
+        }
+    }
+
+    private var shieldScreen: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 80)
+            Text("This is what you'll see\nwhen your budget runs out.")
+                .font(.timeTankTitle(25))
+                .foregroundStyle(Color.textDark)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
+            Text("The second your time is up, the shield locks your chosen apps. Finn is protecting the tank.")
+                .font(.timeTankBody(15))
+                .foregroundStyle(Color.textMuted)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .padding(.top, 8)
+                .padding(.horizontal, 30)
+
+            Spacer().frame(height: 20)
+            shieldMockup
+
+            Spacer().frame(height: 18)
+            TimeTankCard {
+                VStack(alignment: .leading, spacing: 12) {
+                    promiseRow(symbol: "checkmark.shield.fill", color: .tankTeal, text: "Shield shows up the second your budget is spent")
+                    promiseRow(symbol: "moon.fill", color: .tideOrange, text: "Resets every night at midnight — fresh water for Finn")
+                    promiseRow(symbol: "lock.open.fill", color: .muddyBrown, text: "Bypassing lets you through, but murkies the tank")
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+            PrimaryButton(title: "Got it", systemImage: "arrow.right") { advance() }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 50)
+        }
+    }
+
+    private var shieldMockup: some View {
+        VStack(spacing: 18) {
+            // App icon dimmed with clock badge — matches real iOS Screen Time block
+            ZStack(alignment: .bottomTrailing) {
+                Image(uiImage: UIImage(named: "AppIcon") ?? UIImage())
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 76, height: 76)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(.black.opacity(0.38))
+                    }
+                Circle()
+                    .fill(Color(white: 0.18))
+                    .frame(width: 28, height: 28)
+                    .overlay {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .offset(x: 5, y: 5)
+            }
+
+            VStack(spacing: 5) {
+                Text("Time Limit")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.primary)
+                Text("You've reached your limit\non TimeTank.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            VStack(spacing: 10) {
+                Text("Ask For More Time")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Color.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                Text("It's OK")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.blue)
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.14), radius: 24, y: 10)
+        .padding(.horizontal, 32)
     }
 
     private var widgetsScreen: some View {
@@ -958,14 +1123,25 @@ struct OnboardingView: View {
 
     private var beforeAfterScreen: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 70)
-            HStack(spacing: 20) {
-                tankComparison(label: "BEFORE", pollution: 0.85, detail: "\(Int(screenTimeHours))h avg", color: .muddyBrown)
-                tankComparison(label: "WITH TIMETANK", pollution: 0.0, detail: "~\(max(1, Int(screenTimeHours / 2)))h avg", color: .tankTeal)
-            }
-            .padding(.horizontal, 30)
+            Spacer().frame(height: 80)
 
-            Spacer().frame(height: 24)
+            HStack(spacing: 12) {
+                screenTimeBarChart(
+                    label: "BEFORE",
+                    avgHours: screenTimeHours,
+                    color: Color.tideOrange,
+                    sharedMax: screenTimeHours * 1.30
+                )
+                screenTimeBarChart(
+                    label: "WITH TIMETANK",
+                    avgHours: max(0.5, screenTimeHours * 0.5),
+                    color: Color.tankTeal,
+                    sharedMax: screenTimeHours * 1.30
+                )
+            }
+            .padding(.horizontal, 20)
+
+            Spacer().frame(height: 20)
             Text("Use TimeTank and reclaim your time.")
                 .font(.timeTankTitle(24))
                 .foregroundStyle(Color.textDark)
@@ -1112,19 +1288,12 @@ struct OnboardingView: View {
     private func quizScreen(title: String, options: [OnboardingOption], selection: Binding<String?>) -> some View {
         VStack(spacing: 0) {
             Spacer().frame(height: 90)
-            HStack(alignment: .top) {
-                Text(title)
-                    .font(.timeTankTitle(26))
-                    .foregroundStyle(Color.textDark)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer()
-                Image("FinnMascotAlert")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 52, height: 52)
-            }
-            .padding(.horizontal, 24)
+            Text(title)
+                .font(.timeTankTitle(26))
+                .foregroundStyle(Color.textDark)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
 
             Spacer().frame(height: 28)
             VStack(spacing: 10) {
@@ -1287,17 +1456,73 @@ struct OnboardingView: View {
         }
     }
 
-    private func tankComparison(label: String, pollution: Double, detail: String, color: Color) -> some View {
-        VStack(spacing: 8) {
-            labelText(label)
+    private func screenTimeBarChart(label: String, avgHours: Double, color: Color, sharedMax: Double? = nil) -> some View {
+        // Natural day-of-week variation: Sun high, Mon-Thu lower, Fri-Sat high
+        let multipliers: [Double] = [1.18, 0.78, 0.85, 0.74, 0.91, 1.20, 1.30]
+        let barValues = multipliers.map { avgHours * $0 }
+        let peak = max(0.01, sharedMax ?? barValues.max() ?? 1.0)
+        let chartH: CGFloat = 76
+        let days = ["S", "M", "T", "W", "T", "F", "S"]
+
+        let avgLabel: String = {
+            if avgHours < 1 { return "\(Int((avgHours * 60).rounded()))m" }
+            let h = Int(avgHours)
+            let m = Int((avgHours - Double(h)) * 60)
+            return m == 0 ? "\(h)h" : "\(h)h \(m)m"
+        }()
+
+        return VStack(alignment: .leading, spacing: 0) {
+            Text(label)
+                .font(.timeTankLabel(10))
+                .tracking(1.1)
                 .foregroundStyle(color)
-            FocusTankView(pollutionLevel: pollution)
-                .frame(width: 130, height: 130)
-            Text(detail)
-                .font(.timeTankBody(14))
+
+            Text(avgLabel)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(color)
+                .padding(.top, 4)
+                .padding(.bottom, 10)
+
+            HStack(alignment: .bottom, spacing: 3) {
+                ForEach(0..<7, id: \.self) { i in
+                    let ratio = CGFloat(barValues[i] / peak)
+                    let isToday = i == 6
+                    ZStack(alignment: .bottom) {
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(color.opacity(0.10))
+                            .frame(height: chartH)
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(isToday ? color : color.opacity(0.48))
+                            .frame(height: max(4, chartH * ratio))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: chartH)
+
+            HStack(spacing: 3) {
+                ForEach(0..<7, id: \.self) { i in
+                    Text(days[i])
+                        .font(.system(size: 9, weight: i == 6 ? .bold : .regular))
+                        .foregroundStyle(i == 6 ? color : Color.textMuted.opacity(0.65))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.top, 5)
+
+            Text("Daily avg")
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.textMuted)
+                .padding(.top, 6)
         }
+        .padding(14)
         .frame(maxWidth: .infinity)
+        .background(Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(color.opacity(0.22), lineWidth: 1)
+        }
     }
 
     private func promiseRow(symbol: String, color: Color, text: String) -> some View {
@@ -1314,15 +1539,11 @@ struct OnboardingView: View {
 
     private func notificationPreview(title: String, body: String) -> some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.tideOrange)
+            Image(uiImage: UIImage(named: "AppIcon") ?? UIImage())
+                .resizable()
+                .scaledToFit()
                 .frame(width: 42, height: 42)
-                .overlay {
-                    Image(systemName: "hourglass")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(Color.white)
-                        .offset(x: -0.5)
-                }
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -1485,6 +1706,47 @@ struct OnboardingView: View {
             .foregroundStyle(Color.textMuted)
     }
 
+    private var bypassDemoFinnImage: String {
+        switch bypassDemoCount {
+        case 0, 1: return "FinnMascotWorried"
+        case 2: return "FinnMascotDistressed"
+        default: return "FinnMascotSuffering"
+        }
+    }
+
+    private var bypassDemoStatusLabel: String {
+        switch bypassDemoCount {
+        case 0: return "Budget just ran out — tank at \(Int(bypassDemoLevel * 100))%"
+        case 1: return "\(Int(bypassDemoLevel * 100))% murky — Finn is worried"
+        case 2: return "\(Int(bypassDemoLevel * 100))% murky — Finn is really struggling"
+        case 3: return "\(Int(bypassDemoLevel * 100))% murky — Finn needs help"
+        default: return "\(Int(bypassDemoLevel * 100))% murky — Finn can barely breathe"
+        }
+    }
+
+    private func bypassWindowRow(label: String, minutes: Int, active: Bool) -> some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(active ? Color.tideOrange : Color.tideOrange.opacity(0.14))
+                .frame(width: 8, height: 8)
+            Text(label)
+                .font(.timeTankBody(14))
+                .foregroundStyle(active ? Color.textDark : Color.textMuted)
+            Spacer()
+            Text("\(minutes) min")
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundStyle(active ? Color.tideOrange : Color.textMuted)
+            if active {
+                Text("← now")
+                    .font(.timeTankLabel(9))
+                    .tracking(0.8)
+                    .foregroundStyle(Color.tideOrange)
+            }
+        }
+        .padding(.vertical, 3)
+        .animation(.easeInOut(duration: 0.25), value: active)
+    }
+
     private func dotColor(for index: Int) -> Color {
         index >= 72 - dotsRevealed ? Color.tideOrange : Color.textMuted.opacity(0.35)
     }
@@ -1565,7 +1827,7 @@ struct OnboardingView: View {
         case 0..<0.80:
             return "Finn is struggling. Your screen time today is way over what you set."
         default:
-            return "Full pollution. This is what a day completely lost to your phone looks like for Finn."
+            return "Full pollution. This is what a day completely lost to your device looks like for Finn."
         }
     }
 
@@ -1605,7 +1867,7 @@ struct OnboardingView: View {
         case "evening":
             return "Evenings are your biggest attention leak. Your plan will protect downtime and help sleep feel calmer."
         case "all-day":
-            return "Your phone pulls at you all day. Finn gives that invisible habit a visible signal you can respond to."
+            return "Your device pulls at you all day. Finn gives that invisible habit a visible signal you can respond to."
         default:
             return "Your pattern is still forming, but the tank will make it obvious. Clean water means you are staying in control."
         }

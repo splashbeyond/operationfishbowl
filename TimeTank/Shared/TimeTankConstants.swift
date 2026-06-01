@@ -63,4 +63,6 @@ enum TimeTankDefaultsKey {
     static let lastBudgetSaveDate = "lastBudgetSaveDate"
     static let budgetTrackingStartDate = "budgetTrackingStartDate"
     static let selectionDataBackup = "selectedDistractionAppsBackup"
+    static let hasCompletedFirstSetup = "hasCompletedFirstSetup"
+    static let isInstallDaySchedule = "isInstallDaySchedule"
 }
