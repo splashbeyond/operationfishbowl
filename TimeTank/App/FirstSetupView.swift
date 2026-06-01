@@ -394,11 +394,19 @@ struct FirstSetupView: View {
         if !model.isAuthorized {
             Task {
                 await model.requestAuthorization()
-                if model.isAuthorized { model.startMonitoring() }
+                // requestAuthorization() calls autoStartIfReady() internally.
+                // Only call startMonitoring() if it didn't already run — a second
+                // call would see budgetTrackingStartDate != nil and reset
+                // isInstallDaySchedule to false, breaking the install-day display.
+                if model.isAuthorized && !model.isMonitoringEnabled {
+                    model.startMonitoring()
+                }
                 model.completeFirstSetup()
             }
         } else {
-            model.startMonitoring()
+            if !model.isMonitoringEnabled {
+                model.startMonitoring()
+            }
             model.completeFirstSetup()
         }
     }
