@@ -18,6 +18,19 @@ final class TimeTankMonitorExtension: DeviceActivityMonitor {
 
         store.awardCleanDayIfNeeded()
 
+        // Cleaning shield takes priority — previous day ended at 100% pollution
+        if store.cleaningShieldActive {
+            let selection = store.selection
+            let tokenCount = selection.applicationTokens.count + selection.categoryTokens.count + selection.webDomainTokens.count
+            if tokenCount > 0 {
+                ScreenTimeShielding.applyShield(for: selection)
+                store.recordDiagnostic("Daily interval started — cleaning shield applied (previous day 100%).", source: "Monitor")
+            } else {
+                store.recordDiagnostic("Daily interval started — cleaning shield set but 0 tokens, skipping.", source: "Monitor")
+            }
+            return
+        }
+
         // Only clear the shield if the budget has NOT already been exceeded today.
         // If budget was exceeded and monitoring was restarted (e.g. user changed settings),
         // keep the shield up rather than letting them back in.

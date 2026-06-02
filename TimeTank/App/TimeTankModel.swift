@@ -32,6 +32,8 @@ final class TimeTankModel {
     var isBudgetLockedForToday: Bool
     var hasBudgetBeenSet: Bool
     var isInstallDaySchedule: Bool
+    var cleaningShieldActive: Bool
+    var finalBypassConfirmedToday: Bool
     var statusMessage = "Pick the apps that eat your time."
     var authorizationError: String?
     var scheduleError: String?
@@ -69,6 +71,8 @@ final class TimeTankModel {
         hasSeenOnboarding = store.hasSeenOnboarding
         hasCompletedFirstSetup = store.hasCompletedFirstSetup
         isInstallDaySchedule = store.isInstallDaySchedule
+        cleaningShieldActive = store.cleaningShieldActive
+        finalBypassConfirmedToday = store.finalBypassConfirmedToday
         enforceExpiredBypassIfNeeded()
         autoRestartMonitoringIfNeeded()
     }
@@ -271,6 +275,8 @@ final class TimeTankModel {
         hasSeenOnboarding = store.hasSeenOnboarding
         hasCompletedFirstSetup = store.hasCompletedFirstSetup
         isInstallDaySchedule = store.isInstallDaySchedule
+        cleaningShieldActive = store.cleaningShieldActive
+        finalBypassConfirmedToday = store.finalBypassConfirmedToday
         pollutionLevel = store.pollutionLevel
         bypassCount = store.bypassCount
         dailySnapshots = store.dailySnapshots
@@ -295,8 +301,24 @@ final class TimeTankModel {
         scheduleError = store.lastScheduleError
     }
 
+    func cleanTank() {
+        let needsShieldClear = store.cleaningShieldActive
+        store.cleanTank()
+        if needsShieldClear {
+            ScreenTimeShielding.clearShield()
+            store.recordDiagnostic("Cleaning shield cleared — tank clean.", source: "App")
+        }
+        refresh()
+        statusMessage = "The tank is clean. Finn is happy."
+    }
+
+    var requiredCleaningTaps: Int {
+        store.requiredCleaningTaps
+    }
+
     func resetProgress() {
         store.resetProgress()
+        ScreenTimeShielding.clearShield()
         store.recordDiagnostic("Tank progress reset.", source: "App")
         refresh()
         statusMessage = "Fresh water. Finn's ready."
@@ -331,16 +353,18 @@ final class TimeTankModel {
         if store.isBypassActive(), store.isMonitoringEnabled, store.hasSelection {
             let activities = DeviceActivityCenter().activities
             if !activities.contains(TimeTankConstants.bypassActivityName) {
-                if let expiresAt = store.bypassExpiresAt {
-                    let remaining = expiresAt.timeIntervalSinceNow
-                    if remaining > 0 {
-                        let startNow = Date()
-                        let windowMinutes = TimeTankRules.bypassWindowMinutes(
-                            bypassCount: store.bypassCount,
-                            budgetMinutes: store.dailyBudgetMinutes
+                if let expiresAt = store.bypassExpiresAt, expiresAt.timeIntervalSinceNow > 0 {
+                    // Pass the exact original expiry so the recovered schedule matches intent.
+                    do {
+                        try ScreenTimeScheduler.startBypassCooldown(
+                            selection: store.selection,
+                            windowMinutes: 0,
+                            now: Date(),
+                            endsAt: expiresAt
                         )
-                        try? ScreenTimeScheduler.startBypassCooldown(selection: store.selection, windowMinutes: windowMinutes, now: startNow)
-                        store.recordDiagnostic("Bypass cooldown rescheduled from main app foreground.", source: "App")
+                        store.recordDiagnostic("Bypass cooldown recovered from foreground (expires \(expiresAt)).", source: "App")
+                    } catch {
+                        store.recordDiagnostic("Bypass cooldown recovery failed: \(error.localizedDescription)", source: "App")
                     }
                 }
             }

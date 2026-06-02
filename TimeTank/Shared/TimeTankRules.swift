@@ -33,10 +33,9 @@ public enum TimeTankRules {
         if budgetMinutes <= 1 { return 1 }
         switch bypassCount {
         case 0:  return 5
-        case 1:  return 10
-        case 2:  return 15
-        case 3:  return 30
-        default: return 60
+        case 1:  return 5
+        case 2:  return 3
+        default: return 2
         }
     }
 

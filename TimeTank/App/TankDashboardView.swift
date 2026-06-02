@@ -7,6 +7,8 @@ struct TankDashboardView: View {
     @State private var isPickerPresented = false
     @State private var homeBudgetMinutes = TimeTankConstants.defaultBudgetMinutes
     @State private var setupConfirmation: String?
+    @State private var cleaningTapCount: Int = 0
+    @State private var cleaningComplete = false
 
     var body: some View {
         NavigationStack {
@@ -40,6 +42,10 @@ struct TankDashboardView: View {
                         }
                     }
 
+                    if model.pollutionLevel > 0.0001 && !model.cleaningShieldActive {
+                        cleaningCard
+                    }
+
                     setupCard
                     budgetCard
                 }
@@ -47,6 +53,14 @@ struct TankDashboardView: View {
             }
             .background(Color.warmWhite)
             .navigationBarHidden(true)
+            .overlay {
+                if model.cleaningShieldActive {
+                    cleaningOverlay
+                }
+            }
+            .onChange(of: model.pollutionLevel) { _, newValue in
+                if newValue <= 0.0001 { cleaningTapCount = 0 }
+            }
             .familyActivityPicker(
                 headerText: "Pick the apps that eat your time.",
                 footerText: "TimeTank only watches the apps, categories, and sites you choose.",
@@ -354,6 +368,90 @@ struct TankDashboardView: View {
         homeBudgetMinutes = model.dailyBudgetMinutes
     }
 
+    private var cleaningCard: some View {
+        let required = model.requiredCleaningTaps
+        let remaining = max(0, required - cleaningTapCount)
+
+        return TimeTankCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("HELP FINN")
+                    .font(.timeTankLabel())
+                    .tracking(1.2)
+                    .foregroundStyle(Color.textMuted)
+
+                Text(remaining > 0 ? "Tap \(remaining) more time\(remaining == 1 ? "" : "s") to clean the tank." : "Tank is clean!")
+                    .font(.timeTankHeading(17))
+                    .foregroundStyle(Color.textDark)
+
+                CleaningProgressBar(taps: cleaningTapCount, required: required)
+
+                Button {
+                    handleCleaningTap(required: required)
+                } label: {
+                    Text(remaining > 0 ? "Tap to clean" : "Done")
+                        .font(.timeTankButton())
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(remaining > 0 ? Color.tankTeal : Color.tideOrange)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var cleaningOverlay: some View {
+        ZStack {
+            Color.warmWhite.ignoresSafeArea()
+
+            VStack(spacing: 28) {
+                Spacer()
+
+                FocusTankView(pollutionLevel: model.pollutionLevel)
+                    .frame(width: 260, height: 260)
+                    .onTapGesture {
+                        handleCleaningTap(required: 10)
+                    }
+
+                VStack(spacing: 8) {
+                    let remaining = max(0, 10 - cleaningTapCount)
+                    Text("Clean the tank.")
+                        .font(.timeTankTitle())
+                        .foregroundStyle(Color.textDark)
+                    Text(remaining > 0
+                        ? "Tap Finn \(remaining) more time\(remaining == 1 ? "" : "s") to unlock your apps."
+                        : "The tank is clean."
+                    )
+                    .font(.timeTankBody(15))
+                    .foregroundStyle(Color.textMuted)
+                    .multilineTextAlignment(.center)
+                }
+
+                CleaningProgressBar(taps: cleaningTapCount, required: 10)
+                    .padding(.horizontal, 40)
+
+                Spacer()
+            }
+            .padding(24)
+        }
+    }
+
+    private func handleCleaningTap(required: Int) {
+        let haptic = UIImpactFeedbackGenerator(style: .medium)
+        haptic.impactOccurred()
+        guard cleaningTapCount < required else { return }
+        cleaningTapCount += 1
+        if cleaningTapCount >= required {
+            let heavyHaptic = UINotificationFeedbackGenerator()
+            heavyHaptic.notificationOccurred(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                model.cleanTank()
+                cleaningTapCount = 0
+            }
+        }
+    }
+
     private var pollutionColor: Color {
         if model.pollutionLevel >= 1 { return .muddyBrown }
         if model.pollutionLevel >= 0.8 { return .amber }
@@ -382,6 +480,24 @@ struct BudgetProgressBar: View {
         if progress >= 1 { return .muddyBrown }
         if progress >= 0.8 { return .amber }
         return .tankTeal
+    }
+}
+
+struct CleaningProgressBar: View {
+    let taps: Int
+    let required: Int
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.peachFoam)
+                Capsule()
+                    .fill(Color.tankTeal)
+                    .frame(width: required > 0 ? proxy.size.width * CGFloat(taps) / CGFloat(required) : 0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: taps)
+            }
+        }
+        .frame(height: 6)
     }
 }
 

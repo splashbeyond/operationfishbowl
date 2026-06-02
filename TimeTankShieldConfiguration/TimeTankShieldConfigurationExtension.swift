@@ -23,15 +23,77 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
     }
 
     private func configuration() -> ShieldConfiguration {
-        let pollution = UserDefaults(suiteName: appGroupIdentifier)?
-            .double(forKey: pollutionLevelKey) ?? 0
+        let defaults        = UserDefaults(suiteName: appGroupIdentifier)
+        let pollution       = defaults?.double(forKey: pollutionLevelKey) ?? 0
+        let cleaningActive  = defaults?.bool(forKey: "cleaningShieldActive") ?? false
+        let finalPending    = defaults?.bool(forKey: "finalBypassPending") ?? false
 
+        let bg    = UIColor(red: 1.0,  green: 0.973, blue: 0.949, alpha: 1.0)
+        let dark  = UIColor(red: 0.11, green: 0.102, blue: 0.094, alpha: 1.0)
+        let muted = UIColor(red: 0.522, green: 0.475, blue: 0.459, alpha: 1.0)
+        let orange = UIColor(red: 1.0, green: 0.42,  blue: 0.169, alpha: 1.0)
+        let peach  = UIColor(red: 1.0, green: 0.549, blue: 0.38,  alpha: 1.0)
+
+        // Cleaning shield — fires at midnight after a 100% pollution day
+        if cleaningActive {
+            return ShieldConfiguration(
+                backgroundBlurStyle: nil,
+                backgroundColor: bg,
+                icon: finnFaceImage(named: "FinnMascotSuffering"),
+                title: ShieldConfiguration.Label(text: "Finn needs help.", color: dark),
+                subtitle: ShieldConfiguration.Label(
+                    text: "Clean the tank before your apps unlock. Open TimeTank to continue.",
+                    color: muted
+                ),
+                primaryButtonLabel: ShieldConfiguration.Label(text: "Got it", color: .white),
+                primaryButtonBackgroundColor: orange,
+                secondaryButtonLabel: nil
+            )
+        }
+
+        // Two-stage final bypass at 100% pollution
+        if pollution >= 1.0 {
+            if finalPending {
+                return ShieldConfiguration(
+                    backgroundBlurStyle: nil,
+                    backgroundColor: bg,
+                    icon: finnFaceImage(named: "FinnMascotSuffering"),
+                    title: ShieldConfiguration.Label(text: "Last chance.", color: dark),
+                    subtitle: ShieldConfiguration.Label(
+                        text: "You said you'd come back. Finn's watching.",
+                        color: muted
+                    ),
+                    primaryButtonLabel: ShieldConfiguration.Label(text: "Actually, no. Close.", color: .white),
+                    primaryButtonBackgroundColor: orange,
+                    secondaryButtonLabel: ShieldConfiguration.Label(
+                        text: "I'm choosing to hurt Finn.",
+                        color: peach
+                    )
+                )
+            } else {
+                return ShieldConfiguration(
+                    backgroundBlurStyle: nil,
+                    backgroundColor: bg,
+                    icon: finnFaceImage(named: "FinnMascotSuffering"),
+                    title: ShieldConfiguration.Label(text: "Finn is suffering.", color: dark),
+                    subtitle: ShieldConfiguration.Label(
+                        text: "You've already crossed the line today.",
+                        color: muted
+                    ),
+                    primaryButtonLabel: ShieldConfiguration.Label(text: "Go back. Save Finn.", color: .white),
+                    primaryButtonBackgroundColor: orange,
+                    secondaryButtonLabel: ShieldConfiguration.Label(
+                        text: "I understand. Let me in.",
+                        color: peach
+                    )
+                )
+            }
+        }
+
+        // Standard budget-spent shield at < 100% pollution
         let subtitle: String
         let imageName: String
-        if pollution >= 1.0 {
-            imageName = "FinnMascotSuffering"
-            subtitle  = "Finn can barely breathe. Please stop."
-        } else if pollution >= 0.8 {
+        if pollution >= 0.8 {
             imageName = "FinnMascotDistressed"
             subtitle  = "The tank is getting really bad. Finn needs a break."
         } else {
@@ -41,25 +103,13 @@ final class TimeTankShieldConfigurationExtension: ShieldConfigurationDataSource 
 
         return ShieldConfiguration(
             backgroundBlurStyle: nil,
-            backgroundColor: UIColor(red: 1.0, green: 0.973, blue: 0.949, alpha: 1.0),
+            backgroundColor: bg,
             icon: finnFaceImage(named: imageName),
-            title: ShieldConfiguration.Label(
-                text: "Your budget is spent.",
-                color: UIColor(red: 0.11, green: 0.102, blue: 0.094, alpha: 1.0)
-            ),
-            subtitle: ShieldConfiguration.Label(
-                text: subtitle,
-                color: UIColor(red: 0.522, green: 0.475, blue: 0.459, alpha: 1.0)
-            ),
-            primaryButtonLabel: ShieldConfiguration.Label(
-                text: "Stay Focused",
-                color: .white
-            ),
-            primaryButtonBackgroundColor: UIColor(red: 1.0, green: 0.42, blue: 0.169, alpha: 1.0),
-            secondaryButtonLabel: ShieldConfiguration.Label(
-                text: "Open Anyway",
-                color: UIColor(red: 1.0, green: 0.549, blue: 0.38, alpha: 1.0)
-            )
+            title: ShieldConfiguration.Label(text: "Your budget is spent.", color: dark),
+            subtitle: ShieldConfiguration.Label(text: subtitle, color: muted),
+            primaryButtonLabel: ShieldConfiguration.Label(text: "Stay Focused", color: .white),
+            primaryButtonBackgroundColor: orange,
+            secondaryButtonLabel: ShieldConfiguration.Label(text: "Open Anyway", color: peach)
         )
     }
 

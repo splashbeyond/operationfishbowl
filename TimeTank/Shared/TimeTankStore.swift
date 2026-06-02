@@ -166,6 +166,31 @@ final class TimeTankStore {
         set { defaults.set(newValue, forKey: TimeTankDefaultsKey.budgetedAppUsedDuringBypass) }
     }
 
+    var finalBypassPending: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.finalBypassPending) }
+        set { defaults.set(newValue, forKey: TimeTankDefaultsKey.finalBypassPending) }
+    }
+
+    var finalBypassConfirmedToday: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.finalBypassConfirmedToday) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.finalBypassConfirmedToday)
+            reloadWidgets()
+        }
+    }
+
+    var cleaningShieldActive: Bool {
+        get { defaults.bool(forKey: TimeTankDefaultsKey.cleaningShieldActive) }
+        set {
+            defaults.set(newValue, forKey: TimeTankDefaultsKey.cleaningShieldActive)
+            reloadWidgets()
+        }
+    }
+
+    var requiredCleaningTaps: Int {
+        max(0, Int((pollutionLevel * 10).rounded()))
+    }
+
     var diagnostics: [TimeTankDiagnosticEvent] {
         defaults.stringArray(forKey: TimeTankDefaultsKey.diagnostics)?.compactMap(Self.decodeDiagnostic) ?? []
     }
@@ -305,7 +330,7 @@ final class TimeTankStore {
     }
 
     func shouldReapplyShield(now: Date = Date()) -> Bool {
-        isBudgetExceededToday && !isBypassActive(now: now) && hasSelection
+        isBudgetExceededToday && !isBypassActive(now: now) && hasSelection && !finalBypassConfirmedToday
     }
 
     func awardCleanDayIfNeeded(now: Date = Date()) {
@@ -325,8 +350,16 @@ final class TimeTankStore {
             currentsBalance += 1
         }
 
-        pollutionLevel = 0
+        // 100% pollution requires manual cleaning — apply cleaning shield, don't auto-reset
+        if pollutionLevel >= TimeTankRules.maximumPollution - 0.0001 {
+            cleaningShieldActive = true
+        } else {
+            pollutionLevel = 0
+        }
+
         isBudgetExceededToday = false
+        finalBypassConfirmedToday = false
+        finalBypassPending = false
         bypassExpiresAt = nil
         bypassCount = 0
         budgetedAppUsedDuringBypass = false
@@ -359,6 +392,12 @@ final class TimeTankStore {
         return dailySnapshots.first { $0.dayKey == key }
     }
 
+    func cleanTank() {
+        pollutionLevel = 0
+        cleaningShieldActive = false
+        recordDiagnostic("Tank cleaned by user.", source: "App")
+    }
+
     func resetProgress() {
         pollutionLevel = 0
         currentsBalance = 0
@@ -371,6 +410,9 @@ final class TimeTankStore {
         lastShieldActionDate = nil
         bypassCount = 0
         budgetedAppUsedDuringBypass = false
+        finalBypassPending = false
+        finalBypassConfirmedToday = false
+        cleaningShieldActive = false
     }
 
     func recordDiagnostic(_ message: String, source: String, now: Date = Date()) {

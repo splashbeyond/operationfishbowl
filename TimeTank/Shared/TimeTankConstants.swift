@@ -65,4 +65,7 @@ enum TimeTankDefaultsKey {
     static let selectionDataBackup = "selectedDistractionAppsBackup"
     static let hasCompletedFirstSetup = "hasCompletedFirstSetup"
     static let isInstallDaySchedule = "isInstallDaySchedule"
+    static let finalBypassPending = "finalBypassPending"
+    static let finalBypassConfirmedToday = "finalBypassConfirmedToday"
+    static let cleaningShieldActive = "cleaningShieldActive"
 }

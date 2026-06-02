@@ -45,15 +45,21 @@ enum ScreenTimeScheduler {
         )
     }
 
-    static func startBypassCooldown(selection: FamilyActivitySelection, windowMinutes: Int, now: Date = Date()) throws {
+    // endsAt: pass the exact expiry Date when recovering an existing bypass window so the
+    // schedule matches the original intent rather than recalculating from windowMinutes.
+    static func startBypassCooldown(
+        selection: FamilyActivitySelection,
+        windowMinutes: Int,
+        now: Date = Date(),
+        endsAt: Date? = nil
+    ) throws {
         let center = DeviceActivityCenter()
         center.stopMonitoring([TimeTankConstants.bypassActivityName])
 
         let calendar = Calendar.current
-        // Buffer the start 10 seconds ahead so the schedule isn't stale by the time
-        // the system registers it — important when called from extension processes.
-        let start = calendar.date(byAdding: .second, value: 10, to: now) ?? now
-        let intendedEnd = calendar.date(byAdding: .minute, value: windowMinutes, to: now) ?? now
+        // 5-second buffer — enough for extension registration lag without eating short windows.
+        let start = calendar.date(byAdding: .second, value: 5, to: now) ?? now
+        let intendedEnd = endsAt ?? (calendar.date(byAdding: .minute, value: windowMinutes, to: now) ?? now)
         let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? intendedEnd
         let end = min(intendedEnd, endOfDay)
         let startComponents = calendar.dateComponents([.hour, .minute, .second], from: start)
@@ -77,6 +83,16 @@ enum ScreenTimeScheduler {
             during: schedule,
             events: [TimeTankConstants.bypassUsageEventName: event]
         )
+
+        // startMonitoring can return without throwing but still not register.
+        // Verify the activity actually appears in the center before returning.
+        guard center.activities.contains(TimeTankConstants.bypassActivityName) else {
+            throw NSError(
+                domain: "TimeTank",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Bypass activity not found in DeviceActivityCenter after registration."]
+            )
+        }
     }
 
     static var activeActivitySummary: String {
